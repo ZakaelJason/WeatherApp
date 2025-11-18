@@ -1,3 +1,6 @@
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 public class WeatherData {
     private String cityName;
     private String region;
@@ -15,10 +18,35 @@ public class WeatherData {
     private String condition;
     private int conditionCode;
 
+    // Data tambahan dari forecast
+    private double minTemp;
+    private double maxTemp;
+    private double avgTemp;
+    private int dailyChanceOfRain;
+
+    // Data AQI
+    private double usEpaIndex;
+    private double co;
+    private double no2;
+    private double o3;
+    private double so2;
+    private double pm2_5;
+    private double pm10;
+
+    // Data astronomi
+    private String sunrise;
+    private String sunset;
+
+    // Data forecast untuk 7 hari
+    private JSONArray forecastDays;
+
     public WeatherData(String cityName, String region, String country, String localTime,
                        double temperature, double feelsLike, int humidity, double windSpeed,
                        String windDirection, double pressure, double visibility, int cloudCover,
-                       double uvIndex, String condition, int conditionCode) {
+                       double uvIndex, String condition, int conditionCode,
+                       double minTemp, double maxTemp, double avgTemp, int dailyChanceOfRain,
+                       double usEpaIndex, double co, double no2, double o3, double so2,
+                       double pm2_5, double pm10, String sunrise, String sunset, JSONArray forecastDays) {
         this.cityName = cityName;
         this.region = region;
         this.country = country;
@@ -34,6 +62,20 @@ public class WeatherData {
         this.uvIndex = uvIndex;
         this.condition = condition;
         this.conditionCode = conditionCode;
+        this.minTemp = minTemp;
+        this.maxTemp = maxTemp;
+        this.avgTemp = avgTemp;
+        this.dailyChanceOfRain = dailyChanceOfRain;
+        this.usEpaIndex = usEpaIndex;
+        this.co = co;
+        this.no2 = no2;
+        this.o3 = o3;
+        this.so2 = so2;
+        this.pm2_5 = pm2_5;
+        this.pm10 = pm10;
+        this.sunrise = sunrise;
+        this.sunset = sunset;
+        this.forecastDays = forecastDays;
     }
 
     // Getter methods
@@ -52,65 +94,76 @@ public class WeatherData {
     public double getUvIndex() { return uvIndex; }
     public String getCondition() { return condition; }
     public int getConditionCode() { return conditionCode; }
+    public double getMinTemp() { return minTemp; }
+    public double getMaxTemp() { return maxTemp; }
+    public double getAvgTemp() { return avgTemp; }
+    public int getDailyChanceOfRain() { return dailyChanceOfRain; }
+    public double getUsEpaIndex() { return usEpaIndex; }
+    public double getCo() { return co; }
+    public double getNo2() { return no2; }
+    public double getO3() { return o3; }
+    public double getSo2() { return so2; }
+    public double getPm2_5() { return pm2_5; }
+    public double getPm10() { return pm10; }
+    public String getSunrise() { return sunrise; }
+    public String getSunset() { return sunset; }
+    public JSONArray getForecastDays() { return forecastDays; }
 
-    @Override
-    public String toString() {
-        StringBuilder result = new StringBuilder();
-        result.append("╔═══════════════════════════════════════════╗\n");
-        result.append("║              INFORMASI CUACA              ║\n");
-        result.append("╠═══════════════════════════════════════════╣\n");
-        result.append("║  Kota: ").append(String.format("%-30s", cityName)).append("║\n");
-        if (!region.isEmpty()) {
-            result.append("║  Lokasi: ").append(String.format("%-28s", region + ", " + country)).append("║\n");
-        } else {
-            result.append("║  Lokasi: ").append(String.format("%-28s", country)).append("║\n");
+    // Method untuk mendapatkan deskripsi kualitas udara
+    public String getAirQualityDescription() {
+        int index = (int) usEpaIndex;
+        switch (index) {
+            case 1: return "Baik";
+            case 2: return "Sedang";
+            case 3: return "Tidak Sehat untuk Kelompok Sensitif";
+            case 4: return "Tidak Sehat";
+            case 5: return "Sangat Tidak Sehat";
+            case 6: return "Berbahaya";
+            default: return "Tidak Diketahui";
         }
-        result.append("║  Waktu Lokal: ").append(String.format("%-23s", localTime)).append("║\n");
-        result.append("╠═══════════════════════════════════════════╣\n");
-        result.append("║ ").append(String.format("%-41s", getWeatherIcon())).append("║\n");
-        result.append("║                                           ║\n");
-        result.append("║  Suhu           : ").append(String.format("%-20.1f°C", temperature)).append("║\n");
-        result.append("║  Kondisi        : ").append(String.format("%-20s", condition)).append("║\n");
-        result.append("║  Terasa seperti : ").append(String.format("%-20.1f°C", feelsLike)).append("║\n");
-        result.append("║                                           ║\n");
-        result.append("╠═══════════════════════════════════════════╣\n");
-        result.append("║            DETAIL TAMBAHAN               ║\n");
-        result.append("╠═══════════════════════════════════════════╣\n");
-        result.append("║  Kelembaban     : ").append(String.format("%-20d%%", humidity)).append("║\n");
-        result.append("║  Kec. Angin     : ").append(String.format("%-20.1f km/h", windSpeed)).append("║\n");
-        result.append("║  Arah Angin     : ").append(String.format("%-20s", windDirection)).append("║\n");
-        result.append("║  Tekanan Udara  : ").append(String.format("%-20.1f mb", pressure)).append("║\n");
-        result.append("║  Jarak Pandang  : ").append(String.format("%-20.1f km", visibility)).append("║\n");
-        result.append("║  Tutupan Awan   : ").append(String.format("%-20d%%", cloudCover)).append("║\n");
-        result.append("║  Indeks UV      : ").append(String.format("%-20.1f", uvIndex)).append("║\n");
-        result.append("╚═══════════════════════════════════════════╝");
-
-        return result.toString();
     }
 
-    private String getWeatherIcon() {
-        if (conditionCode == 1000) {
-            return "☀️  CERAH";
-        } else if (conditionCode == 1003) {
-            return "🌤️  SEBAGIAN BERAWAN";
-        } else if (conditionCode == 1006) {
-            return "☁️  BERAWAN";
-        } else if (conditionCode == 1009) {
-            return "☁️  MENDUNG";
-        } else if (conditionCode >= 1063 && conditionCode <= 1072) {
-            return "🌧️  HUJAN";
-        } else if (conditionCode >= 1150 && conditionCode <= 1201) {
-            return "🌧️  HUJAN";
-        } else if (conditionCode >= 1210 && conditionCode <= 1225) {
-            return "❄️  SALJU";
-        } else if (conditionCode >= 1237 && conditionCode <= 1264) {
-            return "🌨️  HUJAN ES";
-        } else if (conditionCode >= 1273 && conditionCode <= 1282) {
-            return "⛈️  BADAI PETIR";
-        } else if (conditionCode == 1030 || conditionCode == 1135 || conditionCode == 1147) {
-            return "🌫️  BERKABUT";
-        } else {
-            return "🌤️  " + condition.toUpperCase();
+    // Method untuk mendapatkan data forecast per hari
+    public ForecastDay getForecastDay(int index) {
+        try {
+            if (forecastDays != null && index >= 0 && index < forecastDays.length()) {
+                return new ForecastDay(forecastDays.getJSONObject(index));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        return null;
+    }
+
+    // Inner class untuk data forecast per hari
+    public static class ForecastDay {
+        private String date;
+        private double maxTemp;
+        private double minTemp;
+        private double avgTemp;
+        private String condition;
+        private int chanceOfRain;
+
+        public ForecastDay(org.json.JSONObject dayData) {
+            try {
+                this.date = dayData.getString("date");
+                JSONObject day = dayData.getJSONObject("day");
+                this.maxTemp = day.getDouble("maxtemp_c");
+                this.minTemp = day.getDouble("mintemp_c");
+                this.avgTemp = day.getDouble("avgtemp_c");
+                this.condition = day.getJSONObject("condition").getString("text");
+                this.chanceOfRain = day.getInt("daily_chance_of_rain");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        // Getters
+        public String getDate() { return date; }
+        public double getMaxTemp() { return maxTemp; }
+        public double getMinTemp() { return minTemp; }
+        public double getAvgTemp() { return avgTemp; }
+        public String getCondition() { return condition; }
+        public int getChanceOfRain() { return chanceOfRain; }
     }
 }

@@ -590,20 +590,27 @@ public class WeatherAppGUI extends JFrame {
     }
 
     private void updateWeatherData(WeatherData weatherData) {
+        if (weatherData == null) {
+            showErrorState("Data cuaca tidak tersedia");
+            return;
+        }
+
+        // Update data utama dari API
         cityLabel.setText(weatherData.getCityName() + ", " + weatherData.getCountry());
         temperatureLabel.setText(String.format("%.1f°C", weatherData.getTemperature()));
         conditionLabel.setText(weatherData.getCondition());
         feelsLikeLabel.setText(String.format("Terasa seperti %.1f°C", weatherData.getFeelsLike()));
 
-        double minTemp = weatherData.getTemperature() - 2;
-        double maxTemp = weatherData.getTemperature() + 3;
-        minMaxLabel.setText(String.format("Min: %.1f°C | Max: %.1f°C", minTemp, maxTemp));
+        // Data REAL dari API - Min/Max temperature
+        minMaxLabel.setText(String.format("Min: %.1f°C | Max: %.1f°C",
+                weatherData.getMinTemp(), weatherData.getMaxTemp()));
 
+        // Data real dari API
         humidityLabel.setText(weatherData.getHumidity() + "%");
-        humidityValueLabel.setText("Kelembaban relatif");
+        humidityValueLabel.setText(getHumidityDescription(weatherData.getHumidity()));
 
         windSpeedLabel.setText(String.format("%.1f km/h", weatherData.getWindSpeed()));
-        windDirectionLabel.setText("Arah: " + weatherData.getWindDirection());
+        windDirectionLabel.setText("Arah: " + getWindDirectionDescription(weatherData.getWindDirection()));
 
         pressureLabel.setText(String.format("%.0f hPa", weatherData.getPressure()));
         pressureValueLabel.setText(getPressureDescription(weatherData.getPressure()));
@@ -614,21 +621,174 @@ public class WeatherAppGUI extends JFrame {
         visibilityLabel.setText(String.format("%.1f km", weatherData.getVisibility()));
         visibilityValueLabel.setText(getVisibilityDescription(weatherData.getVisibility()));
 
-        int rainChance = Math.min(100, (weatherData.getHumidity() + weatherData.getCloudCover()) / 2);
-        rainChanceLabel.setText(rainChance + "%");
-        rainChanceValueLabel.setText(getRainChanceDescription(rainChance));
+        // Peluang hujan REAL dari API
+        rainChanceLabel.setText(weatherData.getDailyChanceOfRain() + "%");
+        rainChanceValueLabel.setText(getRainChanceDescription(weatherData.getDailyChanceOfRain()));
 
-        String[] timeParts = weatherData.getLocalTime().split(" ");
-        if (timeParts.length > 1) {
-            sunriseLabel.setText("06:00");
-            sunsetLabel.setText("18:00");
+        // Waktu sunrise/sunset REAL dari API
+        sunriseLabel.setText(weatherData.getSunrise());
+        sunsetLabel.setText(weatherData.getSunset());
+
+        // Update forecast 7 hari dengan data real
+        updateForecastPanel(weatherData);
+
+        // Update additional cards dengan data AQI
+        updateAdditionalCards(weatherData);
+    }
+
+    private void updateForecastPanel(WeatherData weatherData) {
+        // Hapus forecast panel yang lama
+        Component[] components = ((JPanel)scrollPane.getViewport().getView()).getComponents();
+        for (Component comp : components) {
+            if (comp instanceof JPanel) {
+                JPanel panel = (JPanel) comp;
+                // Cari overview panel berdasarkan judul
+                Component[] children = panel.getComponents();
+                for (Component child : children) {
+                    if (child instanceof JLabel) {
+                        JLabel label = (JLabel) child;
+                        if ("7-Day Weather Forecast".equals(label.getText())) {
+                            // Update forecast cards
+                            updateForecastCards(panel, weatherData);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void updateForecastCards(JPanel overviewPanel, WeatherData weatherData) {
+        // Cari panel forecast
+        for (Component comp : overviewPanel.getComponents()) {
+            if (comp instanceof JPanel) {
+                JPanel forecastPanel = (JPanel) comp;
+                if (forecastPanel.getComponentCount() == 7) { // 7 hari forecast
+                    forecastPanel.removeAll();
+
+                    // Update dengan data real dari API
+                    for (int i = 0; i < 7; i++) {
+                        WeatherData.ForecastDay forecastDay = weatherData.getForecastDay(i);
+                        if (forecastDay != null) {
+                            forecastPanel.add(createForecastCard(forecastDay));
+                        }
+                    }
+
+                    forecastPanel.revalidate();
+                    forecastPanel.repaint();
+                    break;
+                }
+            }
+        }
+    }
+
+    private JPanel createForecastCard(WeatherData.ForecastDay forecastDay) {
+        JPanel card = new JPanel();
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setOpaque(false);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(255, 255, 255, 80), 1),
+                BorderFactory.createEmptyBorder(10, 8, 10, 8)
+        ));
+        card.setBackground(new Color(255, 255, 255, 30));
+        card.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        try {
+            // Parse tanggal
+            java.time.LocalDate date = java.time.LocalDate.parse(forecastDay.getDate());
+            DateTimeFormatter dayFormatter = DateTimeFormatter.ofPattern("EEE");
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM");
+
+            String dayName = date.format(dayFormatter);
+            String dateString = date.format(dateFormatter);
+
+            // Label untuk hari
+            JLabel dayLabel = createStyledLabel(dayName, new Font("Arial", Font.BOLD, 12), Color.WHITE);
+            dayLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            // Label untuk tanggal
+            JLabel dateLabel = createStyledLabel(dateString, new Font("Arial", Font.PLAIN, 10), new Color(255, 255, 255, 200));
+            dateLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            // Label untuk suhu rata-rata
+            JLabel tempLabel = createStyledLabel(String.format("%.0f°C", forecastDay.getAvgTemp()),
+                    new Font("Arial", Font.BOLD, 14), Color.WHITE);
+            tempLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            // Label untuk range suhu
+            JLabel rangeLabel = createStyledLabel(
+                    String.format("%.0f°/%.0f°", forecastDay.getMinTemp(), forecastDay.getMaxTemp()),
+                    new Font("Arial", Font.PLAIN, 9), new Color(255, 255, 255, 180));
+            rangeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            // Label untuk kondisi cuaca (disingkat)
+            String condition = forecastDay.getCondition();
+            if (condition.length() > 10) {
+                condition = condition.substring(0, 10) + "...";
+            }
+            JLabel conditionLabel = createStyledLabel(condition, new Font("Arial", Font.PLAIN, 8),
+                    new Color(255, 255, 255, 200));
+            conditionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            card.add(dayLabel);
+            card.add(Box.createVerticalStrut(2));
+            card.add(dateLabel);
+            card.add(Box.createVerticalStrut(5));
+            card.add(tempLabel);
+            card.add(Box.createVerticalStrut(2));
+            card.add(rangeLabel);
+            card.add(Box.createVerticalStrut(2));
+            card.add(conditionLabel);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return card;
+    }
+
+    private void updateAdditionalCards(WeatherData weatherData) {
+        // Update additional cards dengan data real dari AQI dan lainnya
+        // Implementasi serupa dengan updateForecastPanel
+    }
+
+    private String getHumidityDescription(int humidity) {
+        if (humidity < 30) return "Sangat kering";
+        if (humidity < 50) return "Nyaman";
+        if (humidity < 70) return "Lembap";
+        if (humidity < 90) return "Sangat lembap";
+        return "Gerah";
+    }
+
+    private String getWindDirectionDescription(String windDirection) {
+        // Konversi arah angin dari singkatan ke bahasa Indonesia
+        switch (windDirection.toUpperCase()) {
+            case "N": return "Utara";
+            case "NNE": return "Utara-Timur Laut";
+            case "NE": return "Timur Laut";
+            case "ENE": return "Timur-Timur Laut";
+            case "E": return "Timur";
+            case "ESE": return "Timur-Tenggara";
+            case "SE": return "Tenggara";
+            case "SSE": return "Selatan-Tenggara";
+            case "S": return "Selatan";
+            case "SSW": return "Selatan-Barat Daya";
+            case "SW": return "Barat Daya";
+            case "WSW": return "Barat-Barat Daya";
+            case "W": return "Barat";
+            case "WNW": return "Barat-Barat Laut";
+            case "NW": return "Barat Laut";
+            case "NNW": return "Utara-Barat Laut";
+            default: return windDirection;
         }
     }
 
     private String getPressureDescription(double pressure) {
-        if (pressure < 1000) return "Rendah";
-        if (pressure > 1020) return "Tinggi";
-        return "Normal";
+        if (pressure < 1000) return "Sangat Rendah";
+        if (pressure < 1010) return "Rendah";
+        if (pressure < 1020) return "Normal";
+        if (pressure < 1030) return "Tinggi";
+        return "Sangat Tinggi";
     }
 
     private String getUVDescription(double uv) {
@@ -640,16 +800,33 @@ public class WeatherAppGUI extends JFrame {
     }
 
     private String getVisibilityDescription(double visibility) {
+        if (visibility < 2) return "Sangat Terbatas";
         if (visibility < 5) return "Terbatas";
         if (visibility < 10) return "Sedang";
-        return "Baik";
+        if (visibility < 20) return "Baik";
+        return "Sangat Baik";
     }
 
     private String getRainChanceDescription(int chance) {
-        if (chance < 20) return "Hujan kecil";
-        if (chance < 50) return "Hujan ringan";
-        if (chance < 80) return "Hujan sedang";
-        return "Hujan lebat";
+        if (chance < 10) return "Tidak mungkin hujan";
+        if (chance < 30) return "Kecil kemungkinan hujan";
+        if (chance < 50) return "Hujan ringan mungkin";
+        if (chance < 70) return "Kemungkinan hujan";
+        if (chance < 90) return "Kemungkinan besar hujan";
+        return "Hampir pasti hujan";
+    }
+
+    private String getAirQualityDescription(double usEpaIndex) {
+        int index = (int) usEpaIndex;
+        switch (index) {
+            case 1: return "Baik";
+            case 2: return "Sedang";
+            case 3: return "Tidak Sehat untuk Kelompok Sensitif";
+            case 4: return "Tidak Sehat";
+            case 5: return "Sangat Tidak Sehat";
+            case 6: return "Berbahaya";
+            default: return "Tidak Diketahui";
+        }
     }
 
     private void setBackgroundBasedOnTime(String localTime) {
