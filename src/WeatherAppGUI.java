@@ -105,8 +105,8 @@ public class WeatherAppGUI extends JFrame {
                             color1 = new Color(65, 105, 225);
                             color2 = new Color(135, 206, 250);
                         } else if (isEvening(time)) {
-                            color1 = new Color(255, 140, 0);
-                            color2 = new Color(152, 142, 30);
+                            color1 = new Color(135, 206, 250);
+                            color2 = new Color(255, 142, 30);
                         } else {
                             color1 = new Color(70, 130, 180);
                             color2 = new Color(135, 206, 235);
@@ -135,10 +135,11 @@ public class WeatherAppGUI extends JFrame {
     }
 
     private void initializeWeatherLabels() {
-        cityLabel = createStyledLabel("Jakarta, Indonesia", new Font("Arial", Font.BOLD, 16), Color.WHITE);
+        // Font yang lebih besar untuk suhu
+        cityLabel = createStyledLabel("Jakarta, Indonesia", new Font("Arial", Font.BOLD, 18), Color.WHITE);
         temperatureLabel = createStyledLabel("--°C", new Font("Arial", Font.BOLD, 48), Color.WHITE);
         feelsLikeLabel = createStyledLabel("Terasa seperti --°C", new Font("Arial", Font.PLAIN, 14), Color.WHITE);
-        conditionLabel = createStyledLabel("Memuat data cuaca...", new Font("Arial", Font.PLAIN, 14), Color.WHITE);
+        conditionLabel = createStyledLabel("Memuat data cuaca...", new Font("Arial", Font.BOLD, 16), Color.WHITE);
 
         minMaxLabel = createStyledLabel("Min: --°C | Max: --°C", new Font("Arial", Font.PLAIN, 12), Color.WHITE);
         humidityLabel = createStyledLabel("--%", new Font("Arial", Font.BOLD, 24), Color.WHITE);
@@ -164,7 +165,7 @@ public class WeatherAppGUI extends JFrame {
     }
 
     private JLabel createStyledLabel(String text, Font font, Color color) {
-        JLabel label = new JLabel(text, SwingConstants.CENTER);
+        JLabel label = new JLabel(text);
         label.setFont(font);
         label.setForeground(color);
         label.setOpaque(false);
@@ -246,32 +247,78 @@ public class WeatherAppGUI extends JFrame {
     }
 
     private JPanel createCurrentWeatherPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        JPanel panel = new JPanel(new BorderLayout()); // Ganti ke BorderLayout
         panel.setOpaque(false);
         panel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        cityLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        temperatureLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        conditionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        feelsLikeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // Panel kiri untuk suhu
+        JPanel leftPanel = new JPanel();
+        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
+        leftPanel.setOpaque(false);
+        leftPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        panel.add(cityLabel);
-        panel.add(Box.createVerticalStrut(10));
-        panel.add(temperatureLabel);
-        panel.add(Box.createVerticalStrut(5));
-        panel.add(conditionLabel);
-        panel.add(Box.createVerticalStrut(5));
-        panel.add(feelsLikeLabel);
-        panel.add(Box.createVerticalStrut(20));
+        // Panel kanan untuk kondisi cuaca
+        JPanel rightPanel = new JPanel();
+        rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
+        rightPanel.setOpaque(false);
+        rightPanel.setAlignmentX(Component.RIGHT_ALIGNMENT);
 
+        // Optional: Tambahkan padding/margin
+        leftPanel.setBorder(BorderFactory.createEmptyBorder(0, 50, 0, 50)); // Padding kiri-kanan
+        rightPanel.setBorder(BorderFactory.createEmptyBorder(0, 50, 0, 50)); // Padding kiri-kanan
+
+        // Atur alignment untuk komponen kiri
+        temperatureLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        feelsLikeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        minMaxLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // Atur alignment untuk komponen kanan
+        conditionLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
+        cityLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
+
+        // Tambahkan ke panel kiri (suhu)
+        leftPanel.add(temperatureLabel);
+        leftPanel.add(Box.createVerticalStrut(5));
+        leftPanel.add(feelsLikeLabel);
+        leftPanel.add(Box.createVerticalStrut(5));
+        leftPanel.add(minMaxLabel);
+
+        // Tambahkan ke panel kanan (kondisi cuaca)
+        rightPanel.add(cityLabel);
+        rightPanel.add(Box.createVerticalStrut(5));
+        rightPanel.add(conditionLabel);
+
+        // Tambahkan kedua panel ke panel utama
+        panel.add(leftPanel, BorderLayout.WEST);
+        panel.add(rightPanel, BorderLayout.EAST);
+
+        // Separator
         JSeparator separator = new JSeparator();
         separator.setForeground(new Color(255, 255, 255, 100));
         separator.setAlignmentX(Component.CENTER_ALIGNMENT);
         separator.setMaximumSize(new Dimension(400, 1));
-        panel.add(separator);
 
-        return panel;
+        // Panel untuk separator
+        JPanel separatorPanel = new JPanel();
+        separatorPanel.setOpaque(false);
+        separatorPanel.add(separator);
+
+        // Layout utama dengan BoxLayout
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        mainPanel.setOpaque(false);
+
+        // Panel untuk suhu dan kondisi (sejajar)
+        JPanel weatherInfoPanel = new JPanel(new BorderLayout());
+        weatherInfoPanel.setOpaque(false);
+        weatherInfoPanel.add(leftPanel, BorderLayout.WEST);
+        weatherInfoPanel.add(rightPanel, BorderLayout.EAST);
+
+        mainPanel.add(weatherInfoPanel);
+        mainPanel.add(Box.createVerticalStrut(15));
+        mainPanel.add(separator);
+
+        return mainPanel;
     }
 
     private JPanel createDetailsPanel() {
@@ -279,8 +326,8 @@ public class WeatherAppGUI extends JFrame {
         panel.setOpaque(false);
         panel.setMaximumSize(new Dimension(800, 300));
 
-        // Row 1
-        panel.add(createWeatherCard("Suhu", "°C", minMaxLabel, temperatureLabel));
+        // Row 1 - GANTI kartu "Suhu" dengan "Titik Embun" atau informasi lain
+        panel.add(createWeatherCard("Titik Embun", "23°C", new JLabel("Suhu udara jenuh"), new JLabel("23°C")));
         panel.add(createWeatherCard("Kelembaban", humidityLabel.getText(), humidityValueLabel, humidityLabel));
         panel.add(createWeatherCard("Kecepatan Angin", windSpeedLabel.getText(), windDirectionLabel, windSpeedLabel));
         panel.add(createWeatherCard("Tekanan Udara", pressureLabel.getText(), pressureValueLabel, pressureLabel));
@@ -479,7 +526,6 @@ public class WeatherAppGUI extends JFrame {
         card.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel titleLabel = createStyledLabel("Matahari", new Font("Arial", Font.BOLD, 14), Color.WHITE);
-        JLabel emojiLabel = createStyledLabel("☀️", new Font("Arial", Font.PLAIN, 24), Color.WHITE);
 
         JPanel sunTimesPanel = new JPanel(new GridLayout(2, 2, 5, 5));
         sunTimesPanel.setOpaque(false);
@@ -490,7 +536,6 @@ public class WeatherAppGUI extends JFrame {
         sunriseLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         sunsetLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        emojiLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         sunriseTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
         sunsetTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
@@ -501,7 +546,6 @@ public class WeatherAppGUI extends JFrame {
 
         card.add(titleLabel);
         card.add(Box.createVerticalStrut(5));
-        card.add(emojiLabel);
         card.add(Box.createVerticalStrut(10));
         card.add(sunTimesPanel);
 
@@ -587,6 +631,7 @@ public class WeatherAppGUI extends JFrame {
         temperatureLabel.setText("--°C");
         conditionLabel.setText(message);
         feelsLikeLabel.setText("Terasa seperti --°C");
+        minMaxLabel.setText("Min: --°C | Max: --°C");
     }
 
     private void updateWeatherData(WeatherData weatherData) {
@@ -595,7 +640,7 @@ public class WeatherAppGUI extends JFrame {
             return;
         }
 
-        // Update data utama dari API
+        // Update data utama dari API - TANPA BORDER
         cityLabel.setText(weatherData.getCityName() + ", " + weatherData.getCountry());
         temperatureLabel.setText(String.format("%.1f°C", weatherData.getTemperature()));
         conditionLabel.setText(weatherData.getCondition());
@@ -605,7 +650,7 @@ public class WeatherAppGUI extends JFrame {
         minMaxLabel.setText(String.format("Min: %.1f°C | Max: %.1f°C",
                 weatherData.getMinTemp(), weatherData.getMaxTemp()));
 
-        // Data real dari API
+        // Data real dari API untuk kartu lainnya
         humidityLabel.setText(weatherData.getHumidity() + "%");
         humidityValueLabel.setText(getHumidityDescription(weatherData.getHumidity()));
 
@@ -631,9 +676,6 @@ public class WeatherAppGUI extends JFrame {
 
         // Update forecast 7 hari dengan data real
         updateForecastPanel(weatherData);
-
-        // Update additional cards dengan data AQI
-        updateAdditionalCards(weatherData);
     }
 
     private void updateForecastPanel(WeatherData weatherData) {

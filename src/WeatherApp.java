@@ -26,37 +26,6 @@ public class WeatherApp {
         isGUIMode = guiMode;
     }
 
-    public static void main(String[] args) {
-        // Mode CLI - tampilkan output normal
-        isGUIMode = false;
-
-        Scanner scanner = new Scanner(System.in);
-
-        System.out.println("===========================================");
-        System.out.println("      APLIKASI CUACA SEDERHANA");
-        System.out.println("===========================================\n");
-
-        while (true) {
-            System.out.print("Masukkan nama kota (atau 'exit' untuk keluar): ");
-            String city = scanner.nextLine();
-
-            if (city.equalsIgnoreCase("exit")) {
-                System.out.println("Terima kasih telah menggunakan aplikasi!");
-                break;
-            }
-
-            if (city.trim().isEmpty()) {
-                System.out.println("Nama kota tidak boleh kosong!\n");
-                continue;
-            }
-
-            getWeather(city);
-            System.out.println();
-        }
-
-        scanner.close();
-    }
-
     // Ubah menjadi public static agar bisa diakses dari class lain
     public static String getWeather(String city) {
         try {
