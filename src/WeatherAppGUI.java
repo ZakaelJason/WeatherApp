@@ -414,14 +414,10 @@ public class WeatherAppGUI extends JFrame {
     }
 
     private JPanel createForecastCard(LocalDate date, int minTemp, int maxTemp) {
-        JPanel card = new JPanel();
+        BlurPanel card = new BlurPanel(new Color(255, 255, 255));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setOpaque(false);
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(255, 255, 255, 80), 1),
-                BorderFactory.createEmptyBorder(10, 8, 10, 8)
-        ));
-        card.setBackground(new Color(255, 255, 255, 30));
+        card.setBorder(BorderFactory.createEmptyBorder(10, 8, 10, 8));
         card.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Format tanggal dan hari
@@ -431,23 +427,25 @@ public class WeatherAppGUI extends JFrame {
         String dayName = date.format(dayFormatter);
         String dateString = date.format(dateFormatter);
 
-        // Label untuk hari (Monday, Tuesday, etc.)
+        // Buat label-label
         JLabel dayLabel = createStyledLabel(dayName, new Font("Arial", Font.BOLD, 12), Color.WHITE);
-        dayLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        // Label untuk tanggal (18/11, 19/11, etc.)
         JLabel dateLabel = createStyledLabel(dateString, new Font("Arial", Font.PLAIN, 10), new Color(255, 255, 255, 200));
-        dateLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Label untuk suhu rata-rata
         int avgTemp = (minTemp + maxTemp) / 2;
         JLabel tempLabel = createStyledLabel(avgTemp + "°C", new Font("Arial", Font.BOLD, 14), Color.WHITE);
-        tempLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Label untuk range suhu
-        JLabel rangeLabel = createStyledLabel(minTemp + "°/" + maxTemp + "°", new Font("Arial", Font.PLAIN, 9), new Color(255, 255, 255, 180));
+        JLabel rangeLabel = createStyledLabel(minTemp + "°/" + maxTemp + "°",
+                new Font("Arial", Font.PLAIN, 9), new Color(255, 255, 255, 180));
+
+        // Set alignment
+        dayLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        dateLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        tempLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         rangeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
+        // Tambahkan ke card
         card.add(dayLabel);
         card.add(Box.createVerticalStrut(2));
         card.add(dateLabel);
@@ -460,17 +458,18 @@ public class WeatherAppGUI extends JFrame {
     }
 
     private JPanel createWeatherCard(String title, String value, JLabel descriptionLabel, JLabel valueLabel) {
-        JPanel card = new JPanel();
+        // Ganti JPanel biasa dengan BlurPanel
+        BlurPanel card = new BlurPanel(new Color(255, 255, 255));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setOpaque(false);
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(255, 255, 255, 80), 1),
-                BorderFactory.createEmptyBorder(15, 15, 15, 15)
-        ));
-        card.setBackground(new Color(255, 255, 255, 30));
+        card.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         card.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel titleLabel = createStyledLabel(title, new Font("Arial", Font.BOLD, 14), Color.WHITE);
+
+        // Pastikan valueLabel dan descriptionLabel menggunakan warna yang kontras
+        valueLabel.setForeground(Color.WHITE);
+        descriptionLabel.setForeground(new Color(255, 255, 255, 220));
 
         valueLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         descriptionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -486,20 +485,16 @@ public class WeatherAppGUI extends JFrame {
     }
 
     private JPanel createAdditionalCard(String title, String value, String description) {
-        JPanel card = new JPanel();
+        BlurPanel card = new BlurPanel(new Color(255, 255, 255));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setOpaque(false);
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(255, 255, 255, 80), 1),
-                BorderFactory.createEmptyBorder(15, 15, 15, 15)
-        ));
-        card.setBackground(new Color(255, 255, 255, 30));
+        card.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         card.setAlignmentX(Component.CENTER_ALIGNMENT);
         card.setPreferredSize(new Dimension(200, 100));
 
         JLabel titleLabel = createStyledLabel(title, new Font("Arial", Font.BOLD, 14), Color.WHITE);
         JLabel valueLabel = createStyledLabel(value, new Font("Arial", Font.BOLD, 16), Color.WHITE);
-        JLabel descLabel = createStyledLabel(description, new Font("Arial", Font.PLAIN, 11), new Color(255, 255, 255, 200));
+        JLabel descLabel = createStyledLabel(description, new Font("Arial", Font.PLAIN, 11), new Color(255, 255, 255, 220));
 
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         valueLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -515,14 +510,10 @@ public class WeatherAppGUI extends JFrame {
     }
 
     private JPanel createSunCard() {
-        JPanel card = new JPanel();
+        BlurPanel card = new BlurPanel(new Color(255, 255, 255));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setOpaque(false);
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(255, 255, 255, 80), 1),
-                BorderFactory.createEmptyBorder(15, 15, 15, 15)
-        ));
-        card.setBackground(new Color(255, 255, 255, 30));
+        card.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         card.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel titleLabel = createStyledLabel("Matahari", new Font("Arial", Font.BOLD, 14), Color.WHITE);
@@ -532,6 +523,9 @@ public class WeatherAppGUI extends JFrame {
 
         JLabel sunriseTitle = createStyledLabel("Terbit", new Font("Arial", Font.PLAIN, 12), Color.WHITE);
         JLabel sunsetTitle = createStyledLabel("Terbenam", new Font("Arial", Font.PLAIN, 12), Color.WHITE);
+
+        sunriseLabel.setForeground(Color.WHITE);
+        sunsetLabel.setForeground(Color.WHITE);
 
         sunriseLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         sunsetLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -545,7 +539,6 @@ public class WeatherAppGUI extends JFrame {
         sunTimesPanel.add(sunsetLabel);
 
         card.add(titleLabel);
-        card.add(Box.createVerticalStrut(5));
         card.add(Box.createVerticalStrut(10));
         card.add(sunTimesPanel);
 
@@ -725,43 +718,29 @@ public class WeatherAppGUI extends JFrame {
     }
 
     private JPanel createForecastCard(WeatherData.ForecastDay forecastDay) {
-        JPanel card = new JPanel();
+        BlurPanel card = new BlurPanel(new Color(255, 255, 255));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setOpaque(false);
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(255, 255, 255, 80), 1),
-                BorderFactory.createEmptyBorder(10, 8, 10, 8)
-        ));
-        card.setBackground(new Color(255, 255, 255, 30));
+        card.setBorder(BorderFactory.createEmptyBorder(10, 8, 10, 8));
         card.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         try {
             // Parse tanggal
             java.time.LocalDate date = java.time.LocalDate.parse(forecastDay.getDate());
-            DateTimeFormatter dayFormatter = DateTimeFormatter.ofPattern("EEE");
-            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM");
+            java.time.format.DateTimeFormatter dayFormatter = java.time.format.DateTimeFormatter.ofPattern("EEE");
+            java.time.format.DateTimeFormatter dateFormatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM");
 
             String dayName = date.format(dayFormatter);
             String dateString = date.format(dateFormatter);
 
-            // Label untuk hari
+            // Buat label-label yang diperlukan
             JLabel dayLabel = createStyledLabel(dayName, new Font("Arial", Font.BOLD, 12), Color.WHITE);
-            dayLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-            // Label untuk tanggal
             JLabel dateLabel = createStyledLabel(dateString, new Font("Arial", Font.PLAIN, 10), new Color(255, 255, 255, 200));
-            dateLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-            // Label untuk suhu rata-rata
             JLabel tempLabel = createStyledLabel(String.format("%.0f°C", forecastDay.getAvgTemp()),
                     new Font("Arial", Font.BOLD, 14), Color.WHITE);
-            tempLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-            // Label untuk range suhu
             JLabel rangeLabel = createStyledLabel(
                     String.format("%.0f°/%.0f°", forecastDay.getMinTemp(), forecastDay.getMaxTemp()),
                     new Font("Arial", Font.PLAIN, 9), new Color(255, 255, 255, 180));
-            rangeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
             // Label untuk kondisi cuaca (disingkat)
             String condition = forecastDay.getCondition();
@@ -770,8 +749,15 @@ public class WeatherAppGUI extends JFrame {
             }
             JLabel conditionLabel = createStyledLabel(condition, new Font("Arial", Font.PLAIN, 8),
                     new Color(255, 255, 255, 200));
+
+            // Set alignment
+            dayLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            dateLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            tempLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            rangeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             conditionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
+            // Tambahkan ke card
             card.add(dayLabel);
             card.add(Box.createVerticalStrut(2));
             card.add(dateLabel);
@@ -784,6 +770,10 @@ public class WeatherAppGUI extends JFrame {
 
         } catch (Exception e) {
             e.printStackTrace();
+            // Fallback: tambahkan label error
+            JLabel errorLabel = createStyledLabel("Error", new Font("Arial", Font.PLAIN, 10), Color.WHITE);
+            errorLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            card.add(errorLabel);
         }
 
         return card;
