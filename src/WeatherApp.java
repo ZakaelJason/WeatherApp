@@ -111,7 +111,7 @@ public class WeatherApp {
             result.append("Kondisi        : ").append(conditionText).append("\n");
             result.append("Terasa seperti : ").append(feelsLikeC).append("°C\n");
             result.append("-------------------------------------------\n");
-            result.append("Kelembaban     : ").append(humidity).append("%\n");
+            result.append("Kelembapan     : ").append(humidity).append("%\n");
             result.append("Kec. Angin     : ").append(windKph).append(" km/h (").append(windDir).append(")\n");
             result.append("Tekanan Udara  : ").append(pressureMb).append(" mb\n");
             result.append("Jarak Pandang  : ").append(visKm).append(" km\n");

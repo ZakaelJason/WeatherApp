@@ -19,6 +19,8 @@ public class WeatherAppGUI extends JFrame {
     private JLabel feelsLikeLabel;
     private JLabel conditionLabel;
     private JLabel minMaxLabel;
+    private JLabel dewPointLabel;
+    private JLabel dewPointValueLabel;
     private JLabel humidityLabel;
     private JLabel humidityValueLabel;
     private JLabel windSpeedLabel;
@@ -141,9 +143,12 @@ public class WeatherAppGUI extends JFrame {
         feelsLikeLabel = createStyledLabel("Terasa seperti --°C", new Font("Arial", Font.PLAIN, 14), Color.WHITE);
         conditionLabel = createStyledLabel("Memuat data cuaca...", new Font("Arial", Font.BOLD, 16), Color.WHITE);
 
+        dewPointLabel = createStyledLabel("--°C", new Font("Arial", Font.BOLD, 24), Color.WHITE);
+        dewPointValueLabel = createStyledLabel("Titik embun", new Font("Arial", Font.PLAIN, 12), Color.WHITE);
+
         minMaxLabel = createStyledLabel("Min: --°C | Max: --°C", new Font("Arial", Font.PLAIN, 12), Color.WHITE);
         humidityLabel = createStyledLabel("--%", new Font("Arial", Font.BOLD, 24), Color.WHITE);
-        humidityValueLabel = createStyledLabel("Kelembaban relatif", new Font("Arial", Font.PLAIN, 12), Color.WHITE);
+        humidityValueLabel = createStyledLabel("Kelembapan relatif", new Font("Arial", Font.PLAIN, 12), Color.WHITE);
 
         windSpeedLabel = createStyledLabel("-- km/h", new Font("Arial", Font.BOLD, 24), Color.WHITE);
         windDirectionLabel = createStyledLabel("Arah: --", new Font("Arial", Font.PLAIN, 12), Color.WHITE);
@@ -327,8 +332,8 @@ public class WeatherAppGUI extends JFrame {
         panel.setMaximumSize(new Dimension(800, 300));
 
         // Row 1 - GANTI kartu "Suhu" dengan "Titik Embun" atau informasi lain
-        panel.add(createWeatherCard("Titik Embun", "23°C", new JLabel("Suhu udara jenuh"), new JLabel("23°C")));
-        panel.add(createWeatherCard("Kelembaban", humidityLabel.getText(), humidityValueLabel, humidityLabel));
+        panel.add(createWeatherCard("Titik Embun", dewPointLabel.getText(), dewPointValueLabel, dewPointLabel));
+        panel.add(createWeatherCard("Kelembapan", humidityLabel.getText(), humidityValueLabel, humidityLabel));
         panel.add(createWeatherCard("Kecepatan Angin", windSpeedLabel.getText(), windDirectionLabel, windSpeedLabel));
         panel.add(createWeatherCard("Tekanan Udara", pressureLabel.getText(), pressureValueLabel, pressureLabel));
 
@@ -356,20 +361,21 @@ public class WeatherAppGUI extends JFrame {
         JPanel cardsGrid = new JPanel(new GridLayout(0, 3, 10, 10));
         cardsGrid.setOpaque(false);
         cardsGrid.setMaximumSize(new Dimension(800, 400));
+        cardsGrid.setName("additionalCardsGrid"); // Beri nama untuk referensi
 
-        // Tambahkan banyak card tambahan
-        cardsGrid.add(createAdditionalCard("Titik Embun", "23°C", "Suhu dimana udara jenuh"));
-        cardsGrid.add(createAdditionalCard("Indeks Panas", "28°C", "Perasaan suhu aktual"));
-        cardsGrid.add(createAdditionalCard("Kualitas Udara", "151", "Tidak Sehat - PM2.5"));
-        cardsGrid.add(createAdditionalCard("Tutupan Awan", "85%", "Sebagian Berawan"));
-        cardsGrid.add(createAdditionalCard("Cahaya Bulan", "25%", "Bulan Sabit"));
-        cardsGrid.add(createAdditionalCard("Pollen", "Sedang", "Dominan Rumput"));
-        cardsGrid.add(createAdditionalCard("Kelembaban Tanah", "45%", "Kondisi Normal"));
-        cardsGrid.add(createAdditionalCard("Evaporasi", "4.2mm", "Penguapan Harian"));
-        cardsGrid.add(createAdditionalCard("Radiasi UV", "7 W/m²", "Tinggi"));
-        cardsGrid.add(createAdditionalCard("Visibilitas", "10 km", "Jelas"));
-        cardsGrid.add(createAdditionalCard("Angin Kencang", "11 km/h", "Dari Barat"));
-        cardsGrid.add(createAdditionalCard("Tekanan Laut", "1015 hPa", "Normal"));
+        // Tambahkan card dengan data placeholder (akan diupdate nanti)
+        cardsGrid.add(createAdditionalCard("Titik Embun", "--°C", "Suhu dimana udara jenuh"));
+        cardsGrid.add(createAdditionalCard("Indeks Panas", "--°C", "Perasaan suhu aktual"));
+        cardsGrid.add(createAdditionalCard("Kualitas Udara", "--", "Memuat data..."));
+        cardsGrid.add(createAdditionalCard("Tutupan Awan", "--%", "Memuat data..."));
+        cardsGrid.add(createAdditionalCard("Cahaya Bulan", "--%", "Memuat data..."));
+        cardsGrid.add(createAdditionalCard("Temperatur Air", "--", "Memuat data..."));
+        cardsGrid.add(createAdditionalCard("Kelembapan Tanah", "--%", "Memuat data..."));
+        cardsGrid.add(createAdditionalCard("Evaporasi", "--mm", "Penguapan Harian"));
+        cardsGrid.add(createAdditionalCard("Radiasi UV", "--", "Memuat data..."));
+        cardsGrid.add(createAdditionalCard("Visibilitas", "-- km", "Memuat data..."));
+        cardsGrid.add(createAdditionalCard("Angin Kencang", "-- km/h", "Memuat data..."));
+        cardsGrid.add(createAdditionalCard("Tekanan Laut", "-- hPa", "Memuat data..."));
 
         panel.add(cardsGrid);
         return panel;
@@ -603,8 +609,10 @@ public class WeatherAppGUI extends JFrame {
         conditionLabel.setText("Loading...");
         feelsLikeLabel.setText("Terasa seperti --°C");
         minMaxLabel.setText("Min: --°C | Max: --°C");
+        dewPointLabel.setText("--°C");
+        dewPointValueLabel.setText("Memuat...");
         humidityLabel.setText("--%");
-        humidityValueLabel.setText("Kelembaban relatif");
+        humidityValueLabel.setText("Kelembapan relatif");
         windSpeedLabel.setText("-- km/h");
         windDirectionLabel.setText("Arah: --");
         pressureLabel.setText("-- hPa");
@@ -625,6 +633,8 @@ public class WeatherAppGUI extends JFrame {
         conditionLabel.setText(message);
         feelsLikeLabel.setText("Terasa seperti --°C");
         minMaxLabel.setText("Min: --°C | Max: --°C");
+        dewPointLabel.setText("--°C");
+        dewPointValueLabel.setText("Error");
     }
 
     private void updateWeatherData(WeatherData weatherData) {
@@ -633,7 +643,7 @@ public class WeatherAppGUI extends JFrame {
             return;
         }
 
-        // Update data utama dari API - TANPA BORDER
+        // Update data utama dari API
         cityLabel.setText(weatherData.getCityName() + ", " + weatherData.getCountry());
         temperatureLabel.setText(String.format("%.1f°C", weatherData.getTemperature()));
         conditionLabel.setText(weatherData.getCondition());
@@ -642,6 +652,11 @@ public class WeatherAppGUI extends JFrame {
         // Data REAL dari API - Min/Max temperature
         minMaxLabel.setText(String.format("Min: %.1f°C | Max: %.1f°C",
                 weatherData.getMinTemp(), weatherData.getMaxTemp()));
+
+        // TITIK EMBUN REAL dari API (dihitung)
+        double dewPoint = calculateDewPoint(weatherData.getTemperature(), weatherData.getHumidity());
+        dewPointLabel.setText(String.format("%.1f°C", dewPoint));
+        dewPointValueLabel.setText(getDewPointDescription(dewPoint, weatherData.getTemperature()));
 
         // Data real dari API untuk kartu lainnya
         humidityLabel.setText(weatherData.getHumidity() + "%");
@@ -669,6 +684,9 @@ public class WeatherAppGUI extends JFrame {
 
         // Update forecast 7 hari dengan data real
         updateForecastPanel(weatherData);
+
+        // UPDATE TAMBAHAN: Update additional cards dengan data real
+        updateAdditionalCards(weatherData);
     }
 
     private void updateForecastPanel(WeatherData weatherData) {
@@ -780,8 +798,213 @@ public class WeatherAppGUI extends JFrame {
     }
 
     private void updateAdditionalCards(WeatherData weatherData) {
-        // Update additional cards dengan data real dari AQI dan lainnya
-        // Implementasi serupa dengan updateForecastPanel
+        if (weatherData == null) return;
+
+        // Cari panel additional cards
+        Component[] components = ((JPanel)scrollPane.getViewport().getView()).getComponents();
+        for (Component comp : components) {
+            if (comp instanceof JPanel) {
+                JPanel panel = (JPanel) comp;
+                // Cari additional cards panel berdasarkan judul
+                Component[] children = panel.getComponents();
+                for (Component child : children) {
+                    if (child instanceof JLabel) {
+                        JLabel label = (JLabel) child;
+                        if ("Informasi Tambahan".equals(label.getText())) {
+                            // Update additional cards
+                            updateAdditionalCardsGrid(panel, weatherData);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void updateAdditionalCardsGrid(JPanel additionalPanel, WeatherData weatherData) {
+        // Cari grid panel
+        for (Component comp : additionalPanel.getComponents()) {
+            if (comp instanceof JPanel) {
+                JPanel cardsGrid = (JPanel) comp;
+                if (cardsGrid.getComponentCount() == 12) { // 12 card tambahan
+                    cardsGrid.removeAll();
+
+                    // Data real dari API
+                    cardsGrid.add(createAdditionalCard("Titik Embun",
+                            String.format("%.1f°C", calculateDewPoint(weatherData.getTemperature(), weatherData.getHumidity())),
+                            "Suhu dimana udara jenuh"));
+
+                    cardsGrid.add(createAdditionalCard("Indeks Panas",
+                            String.format("%.1f°C", calculateHeatIndex(weatherData.getTemperature(), weatherData.getHumidity())),
+                            "Perasaan suhu aktual"));
+
+                    cardsGrid.add(createAdditionalCard("Kualitas Udara",
+                            String.valueOf((int)weatherData.getUsEpaIndex()),
+                            getAirQualityDescription(weatherData.getUsEpaIndex())));
+
+                    cardsGrid.add(createAdditionalCard("Tutupan Awan",
+                            weatherData.getCloudCover() + "%",
+                            getCloudCoverDescription(weatherData.getCloudCover())));
+
+                    cardsGrid.add(createAdditionalCard("Cahaya Bulan",
+                            calculateMoonPhase(),
+                            getMoonPhaseDescription()));
+
+                    cardsGrid.add(createAdditionalCard("Temperatur Air",
+                            calculateWaterTemperature(weatherData.getTemperature(), weatherData.getHumidity()),
+                            getWaterTemperatureDescription(weatherData.getTemperature())));
+
+                    cardsGrid.add(createAdditionalCard("Kelembapan Tanah",
+                            calculateSoilMoisture(weatherData.getHumidity(), weatherData.getDailyChanceOfRain()) + "%",
+                            getSoilMoistureDescription(weatherData.getHumidity(), weatherData.getDailyChanceOfRain())));
+
+                    cardsGrid.add(createAdditionalCard("Evaporasi",
+                            String.format("%.1fmm", calculateEvaporation(weatherData.getTemperature(), weatherData.getHumidity(), weatherData.getWindSpeed())),
+                            "Penguapan Harian"));
+
+                    cardsGrid.add(createAdditionalCard("Radiasi UV",
+                            String.format("%.1f", weatherData.getUvIndex()),
+                            getUVDescription(weatherData.getUvIndex())));
+
+                    cardsGrid.add(createAdditionalCard("Visibilitas",
+                            String.format("%.1f km", weatherData.getVisibility()),
+                            getVisibilityDescription(weatherData.getVisibility())));
+
+                    cardsGrid.add(createAdditionalCard("Angin Kencang",
+                            String.format("%.1f km/h", weatherData.getWindSpeed()),
+                            "Dari " + getWindDirectionDescription(weatherData.getWindDirection())));
+
+                    cardsGrid.add(createAdditionalCard("Tekanan Laut",
+                            String.format("%.0f hPa", weatherData.getPressure()),
+                            getPressureDescription(weatherData.getPressure())));
+
+                    cardsGrid.revalidate();
+                    cardsGrid.repaint();
+                    break;
+                }
+            }
+        }
+    }
+
+    // Buat titik embun di info utama
+    private String getDewPointDescription(double dewPoint, double temperature) {
+        double difference = temperature - dewPoint;
+
+        if (difference <= 2) return "Sangat Lembap";
+        else if (difference <= 4) return "Lembap";
+        else if (difference <= 6) return "Nyaman";
+        else if (difference <= 8) return "Kering";
+        else return "Sangat Kering";
+    }
+
+    // Method untuk menghitung titik embun
+    private double calculateDewPoint(double temperature, int humidity) {
+        double a = 17.27;
+        double b = 237.7;
+        double alpha = ((a * temperature) / (b + temperature)) + Math.log(humidity / 100.0);
+        return (b * alpha) / (a - alpha);
+    }
+
+    // Method untuk menghitung indeks panas
+    private double calculateHeatIndex(double temperature, int humidity) {
+        // Rumus sederhana untuk heat index
+        if (temperature < 27) return temperature;
+
+        double c1 = -8.78469475556;
+        double c2 = 1.61139411;
+        double c3 = 2.33854883889;
+        double c4 = -0.14611605;
+        double c5 = -0.012308094;
+        double c6 = -0.0164248277778;
+        double c7 = 0.002211732;
+        double c8 = 0.00072546;
+        double c9 = -0.000003582;
+
+        double T = temperature;
+        double R = humidity;
+
+        return c1 + c2*T + c3*R + c4*T*R + c5*T*T + c6*R*R + c7*T*T*R + c8*T*R*R + c9*T*T*R*R;
+    }
+
+    // Method untuk fase bulan (sederhana)
+    private String calculateMoonPhase() {
+        // Implementasi sederhana fase bulan berdasarkan tanggal
+        java.time.LocalDate today = java.time.LocalDate.now();
+        int dayOfMonth = today.getDayOfMonth();
+
+        if (dayOfMonth <= 7) return "25%";
+        else if (dayOfMonth <= 14) return "50%";
+        else if (dayOfMonth <= 21) return "75%";
+        else return "100%";
+    }
+
+    private String getMoonPhaseDescription() {
+        java.time.LocalDate today = java.time.LocalDate.now();
+        int dayOfMonth = today.getDayOfMonth();
+
+        if (dayOfMonth <= 3) return "Bulan Baru";
+        else if (dayOfMonth <= 7) return "Bulan Sabit Awal";
+        else if (dayOfMonth <= 10) return "Paruh Awal";
+        else if (dayOfMonth <= 14) return "Cembung Awal";
+        else if (dayOfMonth <= 17) return "Bulan Purnama";
+        else if (dayOfMonth <= 21) return "Cembung Akhir";
+        else if (dayOfMonth <= 24) return "Paruh Akhir";
+        else return "Bulan Sabit Akhir";
+    }
+
+    // Method untuk kelembapan tanah
+    private int calculateSoilMoisture(int humidity, int chanceOfRain) {
+        // Perhitungan sederhana berdasarkan kelembapan udara dan peluang hujan
+        int baseMoisture = humidity / 2;
+        int rainBonus = chanceOfRain / 4;
+        return Math.min(100, baseMoisture + rainBonus);
+    }
+
+    private String getSoilMoistureDescription(int humidity, int chanceOfRain) {
+        int moisture = calculateSoilMoisture(humidity, chanceOfRain);
+        if (moisture < 20) return "Sangat Kering";
+        else if (moisture < 40) return "Kering";
+        else if (moisture < 60) return "Normal";
+        else if (moisture < 80) return "Lembap";
+        else return "Sangat Lembap";
+    }
+
+    // Method untuk evaporasi
+    private double calculateEvaporation(double temperature, int humidity, double windSpeed) {
+        // Rumus sederhana untuk evaporasi
+        double tempFactor = temperature / 30.0;
+        double humidityFactor = (100 - humidity) / 100.0;
+        double windFactor = windSpeed / 20.0;
+
+        return 4.0 * tempFactor * humidityFactor * (1 + windFactor);
+    }
+
+    // Method untuk menghitung temperatur air (estimasi berdasarkan suhu udara)
+    private String calculateWaterTemperature(double temperature, int humidity) {
+        // Estimasi sederhana: temperatur air biasanya sedikit lebih dingin dari udara
+        // dan dipengaruhi oleh kelembapan
+        double waterTemp = temperature - 2.0; // Biasanya 2-3°C lebih dingin
+
+        // Jika kelembapan tinggi, perbedaan lebih kecil
+        if (humidity > 70) {
+            waterTemp = temperature - 1.0;
+        }
+        // Jika kelembapan rendah, perbedaan lebih besar
+        else if (humidity < 40) {
+            waterTemp = temperature - 3.0;
+        }
+
+        return String.format("%.1f°C", Math.max(0, waterTemp)); // Tidak boleh negatif
+    }
+
+    private String getWaterTemperatureDescription(double airTemperature) {
+        double waterTemp = airTemperature - 2.0; // Estimasi
+
+        if (waterTemp < 15) return "Sangat Dingin";
+        else if (waterTemp < 20) return "Dingin";
+        else if (waterTemp < 25) return "Segar";
+        else if (waterTemp < 30) return "Hangat";
+        else return "Panas";
     }
 
     private String getHumidityDescription(int humidity) {
@@ -859,6 +1082,14 @@ public class WeatherAppGUI extends JFrame {
             case 6: return "Berbahaya";
             default: return "Tidak Diketahui";
         }
+    }
+
+    private String getCloudCoverDescription(int cloudCover) {
+        if (cloudCover <= 10) return "Cerah";
+        else if (cloudCover <= 30) return "Sebagian Cerah";
+        else if (cloudCover <= 70) return "Sebagian Berawan";
+        else if (cloudCover <= 90) return "Berawan";
+        else return "Sangat Berawan";
     }
 
     private void setBackgroundBasedOnTime(String localTime) {
