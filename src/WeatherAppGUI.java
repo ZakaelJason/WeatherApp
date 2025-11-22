@@ -1,7 +1,13 @@
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalTime;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -9,12 +15,19 @@ import java.time.format.DateTimeFormatter;
 public class WeatherAppGUI extends JFrame {
     private JTextField cityField;
     private JButton searchButton;
+    private JButton listButton;
     private JPanel mainPanel;
     private JScrollPane scrollPane;
     private String currentLocalTime;
 
+    // Database Instance
+    private WeatherDatabase db;
+    private String currentCityName = "";
+
     // Komponen untuk menampilkan data cuaca
     private JLabel cityLabel;
+    private JLabel localTimeLabel;
+    private JButton favoriteButton;
     private JLabel temperatureLabel;
     private JLabel feelsLikeLabel;
     private JLabel conditionLabel;
@@ -40,9 +53,11 @@ public class WeatherAppGUI extends JFrame {
     public WeatherAppGUI() {
         setTitle("Weather Dashboard");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(900, 700);
+        setSize(950, 750);
         setLocationRelativeTo(null);
 
+        // Inisialisasi Database
+        db = new WeatherDatabase();
         WeatherApp.setGUIMode(true);
 
         initComponents();
@@ -88,6 +103,22 @@ public class WeatherAppGUI extends JFrame {
         searchButton.setForeground(Color.BLACK);
         searchButton.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         searchButton.setFocusPainted(false);
+
+        listButton = new JButton("Data");
+        listButton.setFont(new Font("Arial", Font.BOLD, 14));
+        listButton.setBackground(new Color(70, 130, 180));
+        listButton.setForeground(Color.BLACK);
+        listButton.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        listButton.setFocusPainted(false);
+
+        favoriteButton = new JButton("♡");
+        favoriteButton.setFont(new Font("Segoe UI Symbol", Font.BOLD, 24));
+        favoriteButton.setForeground(Color.WHITE);
+        favoriteButton.setContentAreaFilled(false);
+        favoriteButton.setBorderPainted(false);
+        favoriteButton.setFocusPainted(false);
+        favoriteButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        favoriteButton.setToolTipText("Tambah ke Favorit");
 
         // Main panel dengan background gradient
         mainPanel = new JPanel() {
@@ -136,9 +167,18 @@ public class WeatherAppGUI extends JFrame {
         progressBar.setVisible(false);
     }
 
+    private void styButton(JButton btn, Color bgColor) {
+        btn.setFont(new Font("Arial", Font.BOLD, 14));
+        btn.setBackground(bgColor);
+        btn.setForeground(Color.WHITE); // Ubah text jadi putih biar kontras
+        btn.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15)); // Padding
+        btn.setFocusPainted(false);
+    }
+
     private void initializeWeatherLabels() {
         // Font yang lebih besar untuk suhu
         cityLabel = createStyledLabel("Jakarta, Indonesia", new Font("Arial", Font.BOLD, 18), Color.WHITE);
+        localTimeLabel = createStyledLabel("--:--", new Font("Arial", Font.BOLD, 12), new Color(255, 255, 255, 200));
         temperatureLabel = createStyledLabel("--°C", new Font("Arial", Font.BOLD, 48), Color.WHITE);
         feelsLikeLabel = createStyledLabel("Terasa seperti --°C", new Font("Arial", Font.PLAIN, 14), Color.WHITE);
         conditionLabel = createStyledLabel("Memuat data cuaca...", new Font("Arial", Font.BOLD, 16), Color.WHITE);
@@ -180,7 +220,7 @@ public class WeatherAppGUI extends JFrame {
     private void layoutComponents() {
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Top panel - Search and title
+        // Top panel
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setOpaque(false);
 
@@ -189,6 +229,8 @@ public class WeatherAppGUI extends JFrame {
         searchPanel.add(cityField);
         searchPanel.add(Box.createHorizontalStrut(10));
         searchPanel.add(searchButton);
+        searchPanel.add(Box.createHorizontalStrut(5));
+        searchPanel.add(listButton); // Add List Button
 
         JLabel titleLabel = createStyledLabel("Weather Dashboard", new Font("Arial", Font.BOLD, 24), Color.WHITE);
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -252,95 +294,80 @@ public class WeatherAppGUI extends JFrame {
     }
 
     private JPanel createCurrentWeatherPanel() {
-        JPanel panel = new JPanel(new BorderLayout()); // Ganti ke BorderLayout
+        JPanel panel = new JPanel(new BorderLayout());
         panel.setOpaque(false);
-        panel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Panel kiri untuk suhu
+        // Left Panel (Suhu)
         JPanel leftPanel = new JPanel();
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
         leftPanel.setOpaque(false);
-        leftPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        leftPanel.setBorder(BorderFactory.createEmptyBorder(0, 50, 0, 50));
 
-        // Panel kanan untuk kondisi cuaca
-        JPanel rightPanel = new JPanel();
-        rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
-        rightPanel.setOpaque(false);
-        rightPanel.setAlignmentX(Component.RIGHT_ALIGNMENT);
-
-        // Optional: Tambahkan padding/margin
-        leftPanel.setBorder(BorderFactory.createEmptyBorder(0, 50, 0, 50)); // Padding kiri-kanan
-        rightPanel.setBorder(BorderFactory.createEmptyBorder(0, 50, 0, 50)); // Padding kiri-kanan
-
-        // Atur alignment untuk komponen kiri
         temperatureLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         feelsLikeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         minMaxLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Atur alignment untuk komponen kanan
-        conditionLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
-        cityLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
-
-        // Tambahkan ke panel kiri (suhu)
         leftPanel.add(temperatureLabel);
         leftPanel.add(Box.createVerticalStrut(5));
         leftPanel.add(feelsLikeLabel);
         leftPanel.add(Box.createVerticalStrut(5));
         leftPanel.add(minMaxLabel);
 
-        // Tambahkan ke panel kanan (kondisi cuaca)
-        rightPanel.add(cityLabel);
+        // Right Panel (Kondisi & Kota & Favorit)
+        JPanel rightPanel = new JPanel();
+        rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
+        rightPanel.setOpaque(false);
+        rightPanel.setBorder(BorderFactory.createEmptyBorder(0, 50, 0, 50));
+
+        // Panel khusus untuk Kota dan Tombol Love sejajar
+        JPanel cityAndFavPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        cityAndFavPanel.setOpaque(false);
+        cityAndFavPanel.add(cityLabel);
+        cityAndFavPanel.add(favoriteButton);
+        cityAndFavPanel.setAlignmentX(Component.RIGHT_ALIGNMENT);
+
+        localTimeLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
+        conditionLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
+
+        rightPanel.add(cityAndFavPanel); // Add panel gabungan
+        rightPanel.add(localTimeLabel);
         rightPanel.add(Box.createVerticalStrut(5));
         rightPanel.add(conditionLabel);
 
-        // Tambahkan kedua panel ke panel utama
         panel.add(leftPanel, BorderLayout.WEST);
         panel.add(rightPanel, BorderLayout.EAST);
 
-        // Separator
+        // Wrapper final
+        JPanel mainWrapper = new JPanel();
+        mainWrapper.setLayout(new BoxLayout(mainWrapper, BoxLayout.Y_AXIS));
+        mainWrapper.setOpaque(false);
+
         JSeparator separator = new JSeparator();
         separator.setForeground(new Color(255, 255, 255, 100));
-        separator.setAlignmentX(Component.CENTER_ALIGNMENT);
         separator.setMaximumSize(new Dimension(400, 1));
 
-        // Panel untuk separator
-        JPanel separatorPanel = new JPanel();
-        separatorPanel.setOpaque(false);
-        separatorPanel.add(separator);
+        mainWrapper.add(panel);
+        mainWrapper.add(Box.createVerticalStrut(15));
+        mainWrapper.add(separator);
 
-        // Layout utama dengan BoxLayout
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-        mainPanel.setOpaque(false);
-
-        // Panel untuk suhu dan kondisi (sejajar)
-        JPanel weatherInfoPanel = new JPanel(new BorderLayout());
-        weatherInfoPanel.setOpaque(false);
-        weatherInfoPanel.add(leftPanel, BorderLayout.WEST);
-        weatherInfoPanel.add(rightPanel, BorderLayout.EAST);
-
-        mainPanel.add(weatherInfoPanel);
-        mainPanel.add(Box.createVerticalStrut(15));
-        mainPanel.add(separator);
-
-        return mainPanel;
+        return mainWrapper;
     }
 
     private JPanel createDetailsPanel() {
         JPanel panel = new JPanel(new GridLayout(2, 4, 15, 15));
         panel.setOpaque(false);
-        panel.setMaximumSize(new Dimension(800, 300));
+        panel.setMaximumSize(new Dimension(800, 350)); // Tinggi ditambah untuk icon
 
-        // Row 1 - GANTI kartu "Suhu" dengan "Titik Embun" atau informasi lain
-        panel.add(createWeatherCard("Titik Embun", dewPointLabel.getText(), dewPointValueLabel, dewPointLabel));
-        panel.add(createWeatherCard("Kelembapan", humidityLabel.getText(), humidityValueLabel, humidityLabel));
-        panel.add(createWeatherCard("Kecepatan Angin", windSpeedLabel.getText(), windDirectionLabel, windSpeedLabel));
-        panel.add(createWeatherCard("Tekanan Udara", pressureLabel.getText(), pressureValueLabel, pressureLabel));
+        // Row 1 - dengan icon (path bisa disesuaikan)
+        panel.add(createWeatherCard("Titik Embun", dewPointLabel.getText(), dewPointValueLabel, dewPointLabel, "src/source/dewPoint.png"));
+        panel.add(createWeatherCard("Kelembapan", humidityLabel.getText(), humidityValueLabel, humidityLabel, "src/source/humidity.png"));
+        panel.add(createWeatherCard("Kecepatan Angin", windSpeedLabel.getText(), windDirectionLabel, windSpeedLabel, "src/source/windspeed (1).png"));
+        panel.add(createWeatherCard("Tekanan Udara", pressureLabel.getText(), pressureValueLabel, pressureLabel, "src/source/windPressure.png"));
 
         // Row 2
-        panel.add(createWeatherCard("Indeks UV", uvLabel.getText(), uvValueLabel, uvLabel));
-        panel.add(createWeatherCard("Jarak Pandang", visibilityLabel.getText(), visibilityValueLabel, visibilityLabel));
-        panel.add(createWeatherCard("Peluang Hujan", rainChanceLabel.getText(), rainChanceValueLabel, rainChanceLabel));
+        panel.add(createWeatherCard("Radiasi UV", uvLabel.getText(), uvValueLabel, uvLabel, "src/source/uv.png"));
+        panel.add(createWeatherCard("Jarak Pandang", visibilityLabel.getText(), visibilityValueLabel, visibilityLabel, "src/source/visibility.png"));
+        panel.add(createWeatherCard("Peluang Hujan", rainChanceLabel.getText(), rainChanceValueLabel, rainChanceLabel, "src/source/rainchance.png"));
         panel.add(createSunCard());
 
         return panel;
@@ -360,22 +387,22 @@ public class WeatherAppGUI extends JFrame {
         // Grid untuk card tambahan
         JPanel cardsGrid = new JPanel(new GridLayout(0, 3, 10, 10));
         cardsGrid.setOpaque(false);
-        cardsGrid.setMaximumSize(new Dimension(800, 400));
+        cardsGrid.setMaximumSize(new Dimension(800, 450));
         cardsGrid.setName("additionalCardsGrid"); // Beri nama untuk referensi
 
-        // Tambahkan card dengan data placeholder (akan diupdate nanti)
-        cardsGrid.add(createAdditionalCard("Titik Embun", "--°C", "Suhu dimana udara jenuh"));
-        cardsGrid.add(createAdditionalCard("Indeks Panas", "--°C", "Perasaan suhu aktual"));
-        cardsGrid.add(createAdditionalCard("Kualitas Udara", "--", "Memuat data..."));
-        cardsGrid.add(createAdditionalCard("Tutupan Awan", "--%", "Memuat data..."));
-        cardsGrid.add(createAdditionalCard("Cahaya Bulan", "--%", "Memuat data..."));
-        cardsGrid.add(createAdditionalCard("Temperatur Air", "--", "Memuat data..."));
-        cardsGrid.add(createAdditionalCard("Kelembapan Tanah", "--%", "Memuat data..."));
-        cardsGrid.add(createAdditionalCard("Evaporasi", "--mm", "Penguapan Harian"));
-        cardsGrid.add(createAdditionalCard("Radiasi UV", "--", "Memuat data..."));
-        cardsGrid.add(createAdditionalCard("Visibilitas", "-- km", "Memuat data..."));
-        cardsGrid.add(createAdditionalCard("Angin Kencang", "-- km/h", "Memuat data..."));
-        cardsGrid.add(createAdditionalCard("Tekanan Laut", "-- hPa", "Memuat data..."));
+        // TAMBAHKAN PATH ICON UNTUK SEMUA CARD AWAL (LOADING STATE)
+//        cardsGrid.add(createAdditionalCard("Titik Embun", "--°C", "Suhu dimana udara jenuh", ""));
+        cardsGrid.add(createAdditionalCard("Indeks Panas", "--°C", "Perasaan suhu aktual", "src/source/heating.png"));
+        cardsGrid.add(createAdditionalCard("Kualitas Udara", "--", "Memuat data...", "src/source/airquality.png"));
+        cardsGrid.add(createAdditionalCard("Tutupan Awan", "--%", "Memuat data...", "src/source/cloudCover.png"));
+        cardsGrid.add(createAdditionalCard("Cahaya Bulan", "--%", "Memuat data...", ""));
+        cardsGrid.add(createAdditionalCard("Temperatur Air", "--°C", "Memuat data...", "src/source/waterTemperature.png"));
+        cardsGrid.add(createAdditionalCard("Kelembapan Tanah", "--%", "Memuat data...", "src/source/soilMoisture.png"));
+        cardsGrid.add(createAdditionalCard("Evaporasi", "--mm", "Penguapan Harian", "src/source/Evaporation.png"));
+//        cardsGrid.add(createAdditionalCard("Radiasi UV", "--", "Memuat data...", ""));
+//        cardsGrid.add(createAdditionalCard("Visibilitas", "-- km", "Memuat data...", ""));
+//        cardsGrid.add(createAdditionalCard("Angin Kencang", "-- km/h", "Memuat data...", ""));
+        cardsGrid.add(createAdditionalCard("Tekanan Laut", "-- hPa", "Memuat data...", "src/source/ocenPressure.png"));
 
         panel.add(cardsGrid);
         return panel;
@@ -386,35 +413,15 @@ public class WeatherAppGUI extends JFrame {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setOpaque(false);
         panel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
         JLabel sectionTitle = createStyledLabel("7-Day Weather Forecast", new Font("Arial", Font.BOLD, 18), Color.WHITE);
         sectionTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
         panel.add(sectionTitle);
         panel.add(Box.createVerticalStrut(15));
-
-        // Panel untuk forecast cards (7 hari horizontal)
         JPanel forecastPanel = new JPanel(new GridLayout(1, 7, 8, 0));
         forecastPanel.setOpaque(false);
         forecastPanel.setMaximumSize(new Dimension(800, 120));
-
-        // Generate forecast untuk 7 hari (kemarin + hari ini + 5 hari ke depan)
-        LocalDate today = LocalDate.now();
-
-        // Kemarin
-        forecastPanel.add(createForecastCard(today.minusDays(1), 22, 28));
-        // Hari ini
-        forecastPanel.add(createForecastCard(today, 23, 29));
-        // Besok
-        forecastPanel.add(createForecastCard(today.plusDays(1), 24, 30));
-        // 2 hari lagi
-        forecastPanel.add(createForecastCard(today.plusDays(2), 23, 29));
-        // 3 hari lagi
-        forecastPanel.add(createForecastCard(today.plusDays(3), 22, 28));
-        // 4 hari lagi
-        forecastPanel.add(createForecastCard(today.plusDays(4), 24, 31));
-        // 5 hari lagi
-        forecastPanel.add(createForecastCard(today.plusDays(5), 23, 30));
-
+        // Tambahkan placeholder
+        for(int i=0; i<7; i++) forecastPanel.add(new BlurPanel(new Color(255,255,255)));
         panel.add(forecastPanel);
         return panel;
     }
@@ -463,8 +470,8 @@ public class WeatherAppGUI extends JFrame {
         return card;
     }
 
-    private JPanel createWeatherCard(String title, String value, JLabel descriptionLabel, JLabel valueLabel) {
-        // Ganti JPanel biasa dengan BlurPanel
+    // METHOD BARU: Create weather card dengan icon
+    private JPanel createWeatherCard(String title, String value, JLabel descriptionLabel, JLabel valueLabel, String iconPath) {
         BlurPanel card = new BlurPanel(new Color(255, 255, 255));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setOpaque(false);
@@ -472,6 +479,9 @@ public class WeatherAppGUI extends JFrame {
         card.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel titleLabel = createStyledLabel(title, new Font("Arial", Font.BOLD, 14), Color.WHITE);
+
+        // Panel untuk icon - RUANG KOSONG UNTUK ICON
+        JPanel iconPanel = createIconPanel(iconPath, 50, 50);
 
         // Pastikan valueLabel dan descriptionLabel menggunakan warna yang kontras
         valueLabel.setForeground(Color.WHITE);
@@ -480,39 +490,98 @@ public class WeatherAppGUI extends JFrame {
         valueLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         descriptionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        iconPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         card.add(titleLabel);
-        card.add(Box.createVerticalStrut(10));
-        card.add(valueLabel);
+        card.add(Box.createVerticalStrut(8));
+        card.add(iconPanel); // Tambahkan icon panel
         card.add(Box.createVerticalStrut(5));
+        card.add(valueLabel);
+        card.add(Box.createVerticalStrut(3));
         card.add(descriptionLabel);
 
         return card;
     }
 
-    private JPanel createAdditionalCard(String title, String value, String description) {
+    // METHOD BARU: Create additional card dengan icon
+    private JPanel createAdditionalCard(String title, String value, String description, String iconPath) {
         BlurPanel card = new BlurPanel(new Color(255, 255, 255));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setOpaque(false);
         card.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         card.setAlignmentX(Component.CENTER_ALIGNMENT);
-        card.setPreferredSize(new Dimension(200, 100));
+        card.setPreferredSize(new Dimension(200, 130)); // Tinggi ditambah untuk icon
 
         JLabel titleLabel = createStyledLabel(title, new Font("Arial", Font.BOLD, 14), Color.WHITE);
         JLabel valueLabel = createStyledLabel(value, new Font("Arial", Font.BOLD, 16), Color.WHITE);
         JLabel descLabel = createStyledLabel(description, new Font("Arial", Font.PLAIN, 11), new Color(255, 255, 255, 220));
 
+        // Panel untuk icon
+        JPanel iconPanel = createIconPanel(iconPath, 40, 40);
+
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         valueLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         descLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        iconPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         card.add(titleLabel);
-        card.add(Box.createVerticalStrut(8));
-        card.add(valueLabel);
         card.add(Box.createVerticalStrut(5));
+        card.add(iconPanel);
+        card.add(Box.createVerticalStrut(5));
+        card.add(valueLabel);
+        card.add(Box.createVerticalStrut(3));
         card.add(descLabel);
 
         return card;
+    }
+
+    // METHOD BARU: Create icon panel dengan fallback
+    private JPanel createIconPanel(String iconPath, int width, int height) {
+        JPanel iconPanel = new JPanel();
+        iconPanel.setLayout(new BorderLayout());
+        iconPanel.setOpaque(false);
+        iconPanel.setPreferredSize(new Dimension(width, height));
+        iconPanel.setMaximumSize(new Dimension(width, height));
+
+        if (iconPath != null && !iconPath.isEmpty()) {
+            try {
+                ImageIcon originalIcon = loadImage(iconPath);
+                if (originalIcon != null) {
+                    // Scale icon ke ukuran yang sesuai
+                    Image scaledImage = originalIcon.getImage().getScaledInstance(width-10, height-10, Image.SCALE_SMOOTH);
+                    ImageIcon scaledIcon = new ImageIcon(scaledImage);
+                    JLabel iconLabel = new JLabel(scaledIcon);
+                    iconLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    iconPanel.add(iconLabel, BorderLayout.CENTER);
+                    return iconPanel;
+                }
+            } catch (Exception e) {
+                System.out.println("Could not load icon: " + iconPath);
+                // Tetap lanjut dengan panel kosong
+            }
+        }
+
+        // Fallback: panel kosong (ruang reserved untuk icon)
+        JLabel placeholder = new JLabel();
+        placeholder.setPreferredSize(new Dimension(width-10, height-10));
+        iconPanel.add(placeholder, BorderLayout.CENTER);
+        return iconPanel;
+    }
+
+    // METHOD BARU: Load image utility
+    private ImageIcon loadImage(String resourcePath) {
+        try {
+            BufferedImage image = ImageIO.read(new File(resourcePath));
+            if (image != null) {
+                return new ImageIcon(image);
+            } else {
+                System.out.println("Could not load image: " + resourcePath);
+                return null;
+            }
+        } catch (IOException e) {
+            System.out.println("Error loading image: " + resourcePath + " - " + e.getMessage());
+            return null;
+        }
     }
 
     private JPanel createSunCard() {
@@ -523,6 +592,9 @@ public class WeatherAppGUI extends JFrame {
         card.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel titleLabel = createStyledLabel("Matahari", new Font("Arial", Font.BOLD, 14), Color.WHITE);
+
+        // Panel untuk icon matahari
+        JPanel iconPanel = createIconPanel("src/source/sun.png", 40, 40);
 
         JPanel sunTimesPanel = new JPanel(new GridLayout(2, 2, 5, 5));
         sunTimesPanel.setOpaque(false);
@@ -538,6 +610,7 @@ public class WeatherAppGUI extends JFrame {
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         sunriseTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
         sunsetTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+        iconPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         sunTimesPanel.add(sunriseTitle);
         sunTimesPanel.add(sunsetTitle);
@@ -545,30 +618,121 @@ public class WeatherAppGUI extends JFrame {
         sunTimesPanel.add(sunsetLabel);
 
         card.add(titleLabel);
-        card.add(Box.createVerticalStrut(10));
+        card.add(Box.createVerticalStrut(8));
+        card.add(iconPanel);
+        card.add(Box.createVerticalStrut(8));
         card.add(sunTimesPanel);
 
         return card;
     }
 
     private void addEventListeners() {
-        searchButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                searchWeather();
-            }
-        });
+        // Event Cari
+        ActionListener searchAction = e -> searchWeather(cityField.getText().trim());
+        searchButton.addActionListener(searchAction);
+        cityField.addActionListener(searchAction);
 
-        cityField.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                searchWeather();
-            }
-        });
+        // Event Buka List (History & Favorit)
+        listButton.addActionListener(e -> showListDialog());
+
+        // Event Toggle Favorit
+        favoriteButton.addActionListener(e -> toggleFavorite());
     }
 
-    private void searchWeather() {
-        String city = cityField.getText().trim();
+    // Method baru: Menampilkan Dialog History/Favorit
+    private void showListDialog() {
+        JDialog dialog = new JDialog(this, "Kelola Kota", true);
+        dialog.setSize(400, 500);
+        dialog.setLocationRelativeTo(this);
+
+        JTabbedPane tabbedPane = new JTabbedPane();
+
+        // --- TAB 1: FAVORIT ---
+        DefaultListModel<String> favModel = new DefaultListModel<>();
+        for(String s : db.getFavorites()) favModel.addElement(s);
+        JList<String> favList = new JList<>(favModel);
+        favList.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    cityField.setText(favList.getSelectedValue());
+                    searchWeather(favList.getSelectedValue());
+                    dialog.dispose();
+                }
+            }
+        });
+        tabbedPane.addTab("⭐ Favorit", new JScrollPane(favList));
+
+        // --- TAB 2: RIWAYAT (HISTORY) ---
+        // Kita gunakan JPanel agar bisa menampung List dan Tombol
+        JPanel historyPanel = new JPanel(new BorderLayout());
+
+        DefaultListModel<String> histModel = new DefaultListModel<>();
+        for(String s : db.getHistory()) histModel.addElement(s);
+        JList<String> histList = new JList<>(histModel);
+
+        // Event double click untuk cari dari history
+        histList.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    cityField.setText(histList.getSelectedValue());
+                    searchWeather(histList.getSelectedValue());
+                    dialog.dispose();
+                }
+            }
+        });
+
+        // Tombol Hapus History
+        JButton clearHistoryButton = new JButton("Hapus Semua Riwayat");
+        clearHistoryButton.setBackground(new Color(220, 53, 69)); // Warna Merah
+        clearHistoryButton.setForeground(Color.RED);
+        clearHistoryButton.setFont(new Font("Arial", Font.BOLD, 12));
+        clearHistoryButton.setFocusPainted(false);
+
+        // Aksi tombol hapus
+        clearHistoryButton.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(dialog,
+                    "Apakah Anda yakin ingin menghapus seluruh riwayat pencarian?",
+                    "Konfirmasi Hapus",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                db.clearHistory();      // Hapus dari database
+                histModel.clear();      // Bersihkan tampilan list di layar
+                JOptionPane.showMessageDialog(dialog, "Riwayat berhasil dihapus.");
+            }
+        });
+
+        // Susun layout panel history
+        historyPanel.add(new JScrollPane(histList), BorderLayout.CENTER);
+        historyPanel.add(clearHistoryButton, BorderLayout.SOUTH);
+
+        tabbedPane.addTab("🕒 Riwayat", historyPanel);
+
+        dialog.add(tabbedPane);
+        dialog.setVisible(true);
+    }
+
+    private void toggleFavorite() {
+        if (currentCityName == null || currentCityName.isEmpty()) return;
+
+        boolean isFav = db.isFavorite(currentCityName);
+        if (isFav) {
+            db.removeFavorite(currentCityName);
+            favoriteButton.setText("♡");
+            JOptionPane.showMessageDialog(this, "Dihapus dari favorit!");
+        } else {
+            boolean success = db.addFavorite(currentCityName);
+            if(success) {
+                favoriteButton.setText("❤");
+                JOptionPane.showMessageDialog(this, "Ditambahkan ke favorit!");
+            } else {
+                JOptionPane.showMessageDialog(this, "Gagal menambahkan (Mungkin duplikat).");
+            }
+        }
+    }
+
+    private void searchWeather(String city) {
         if (city.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Masukkan nama kota terlebih dahulu!", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;
@@ -589,10 +753,24 @@ public class WeatherAppGUI extends JFrame {
                 try {
                     WeatherData weatherData = get();
                     if (weatherData != null) {
+                        currentCityName = weatherData.getCityName(); // Simpan nama kota saat ini
+
+                        // Simpan ke history database
+                        db.addToHistory(currentCityName);
+
                         updateWeatherData(weatherData);
                         setBackgroundBasedOnTime(weatherData.getLocalTime());
+
+                        // Cek status favorit dan update tombol
+                        if(db.isFavorite(currentCityName)) {
+                            favoriteButton.setText("❤");
+                        } else {
+                            favoriteButton.setText("♡");
+                        }
+
                     } else {
                         showErrorState("Kota tidak ditemukan!");
+                        currentCityName = "";
                     }
                 } catch (Exception ex) {
                     showErrorState("Gagal mengambil data cuaca: " + ex.getMessage());
@@ -645,6 +823,7 @@ public class WeatherAppGUI extends JFrame {
 
         // Update data utama dari API
         cityLabel.setText(weatherData.getCityName() + ", " + weatherData.getCountry());
+        localTimeLabel.setText("Waktu lokal: " + weatherData.getLocalTime());
         temperatureLabel.setText(String.format("%.1f°C", weatherData.getTemperature()));
         conditionLabel.setText(weatherData.getCondition());
         feelsLikeLabel.setText(String.format("Terasa seperti %.1f°C", weatherData.getFeelsLike()));
@@ -826,57 +1005,57 @@ public class WeatherAppGUI extends JFrame {
         for (Component comp : additionalPanel.getComponents()) {
             if (comp instanceof JPanel) {
                 JPanel cardsGrid = (JPanel) comp;
-                if (cardsGrid.getComponentCount() == 12) { // 12 card tambahan
+                if ("additionalCardsGrid".equals(cardsGrid.getName()) || cardsGrid.getComponentCount() == 12) {
                     cardsGrid.removeAll();
 
-                    // Data real dari API
-                    cardsGrid.add(createAdditionalCard("Titik Embun",
-                            String.format("%.1f°C", calculateDewPoint(weatherData.getTemperature(), weatherData.getHumidity())),
-                            "Suhu dimana udara jenuh"));
+                    // Data real dari API dengan path icon lengkap
+//                    cardsGrid.add(createAdditionalCard("Titik Embun",
+//                            String.format("%.1f°C", calculateDewPoint(weatherData.getTemperature(), weatherData.getHumidity())),
+//                            "Suhu dimana udara jenuh", ""));
 
                     cardsGrid.add(createAdditionalCard("Indeks Panas",
                             String.format("%.1f°C", calculateHeatIndex(weatherData.getTemperature(), weatherData.getHumidity())),
-                            "Perasaan suhu aktual"));
+                            "Perasaan suhu aktual", "src/source/heating.png"));
 
                     cardsGrid.add(createAdditionalCard("Kualitas Udara",
                             String.valueOf((int)weatherData.getUsEpaIndex()),
-                            getAirQualityDescription(weatherData.getUsEpaIndex())));
+                            getAirQualityDescription(weatherData.getUsEpaIndex()), "src/source/airquality.png"));
 
                     cardsGrid.add(createAdditionalCard("Tutupan Awan",
                             weatherData.getCloudCover() + "%",
-                            getCloudCoverDescription(weatherData.getCloudCover())));
+                            getCloudCoverDescription(weatherData.getCloudCover()), "src/source/cloudCover.png"));
 
                     cardsGrid.add(createAdditionalCard("Cahaya Bulan",
                             calculateMoonPhase(),
-                            getMoonPhaseDescription()));
+                            getMoonPhaseDescription(), ""));
 
                     cardsGrid.add(createAdditionalCard("Temperatur Air",
                             calculateWaterTemperature(weatherData.getTemperature(), weatherData.getHumidity()),
-                            getWaterTemperatureDescription(weatherData.getTemperature())));
+                            getWaterTemperatureDescription(weatherData.getTemperature()), "src/source/waterTemperature.png"));
 
                     cardsGrid.add(createAdditionalCard("Kelembapan Tanah",
                             calculateSoilMoisture(weatherData.getHumidity(), weatherData.getDailyChanceOfRain()) + "%",
-                            getSoilMoistureDescription(weatherData.getHumidity(), weatherData.getDailyChanceOfRain())));
+                            getSoilMoistureDescription(weatherData.getHumidity(), weatherData.getDailyChanceOfRain()), "src/source/soilMoisture.png"));
 
                     cardsGrid.add(createAdditionalCard("Evaporasi",
                             String.format("%.1fmm", calculateEvaporation(weatherData.getTemperature(), weatherData.getHumidity(), weatherData.getWindSpeed())),
-                            "Penguapan Harian"));
+                            "Penguapan Harian", "src/source/Evaporation.png"));
 
-                    cardsGrid.add(createAdditionalCard("Radiasi UV",
-                            String.format("%.1f", weatherData.getUvIndex()),
-                            getUVDescription(weatherData.getUvIndex())));
-
-                    cardsGrid.add(createAdditionalCard("Visibilitas",
-                            String.format("%.1f km", weatherData.getVisibility()),
-                            getVisibilityDescription(weatherData.getVisibility())));
-
-                    cardsGrid.add(createAdditionalCard("Angin Kencang",
-                            String.format("%.1f km/h", weatherData.getWindSpeed()),
-                            "Dari " + getWindDirectionDescription(weatherData.getWindDirection())));
+//                    cardsGrid.add(createAdditionalCard("Radiasi UV",
+//                            String.format("%.1f", weatherData.getUvIndex()),
+//                            getUVDescription(weatherData.getUvIndex()), ""));
+//
+//                    cardsGrid.add(createAdditionalCard("Visibilitas",
+//                            String.format("%.1f km", weatherData.getVisibility()),
+//                            getVisibilityDescription(weatherData.getVisibility()), ""));
+//
+//                    cardsGrid.add(createAdditionalCard("Angin Kencang",
+//                            String.format("%.1f km/h", weatherData.getWindSpeed()),
+//                            "Dari " + getWindDirectionDescription(weatherData.getWindDirection()), ""));
 
                     cardsGrid.add(createAdditionalCard("Tekanan Laut",
                             String.format("%.0f hPa", weatherData.getPressure()),
-                            getPressureDescription(weatherData.getPressure())));
+                            getPressureDescription(weatherData.getPressure()), "src/source/ocenPressure.png"));
 
                     cardsGrid.revalidate();
                     cardsGrid.repaint();
@@ -885,6 +1064,7 @@ public class WeatherAppGUI extends JFrame {
             }
         }
     }
+
 
     // Buat titik embun di info utama
     private String getDewPointDescription(double dewPoint, double temperature) {
