@@ -49,6 +49,8 @@ public class WeatherAppGUI extends JFrame {
     private JLabel sunriseLabel;
     private JLabel sunsetLabel;
     private JProgressBar progressBar;
+    private JPanel forecastCardsPanel;
+    private JPanel additionalInfoGridPanel;
 
     public WeatherAppGUI() {
         setTitle("Weather Dashboard");
@@ -58,7 +60,6 @@ public class WeatherAppGUI extends JFrame {
 
         // Inisialisasi Database
         db = new WeatherDatabase();
-        WeatherApp.setGUIMode(true);
 
         initComponents();
         layoutComponents();
@@ -66,6 +67,15 @@ public class WeatherAppGUI extends JFrame {
 
         setBackgroundBasedOnTime("12:00");
         showLoadingState();
+
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                if (db != null) {
+                    db.closeConnection(); // Panggil method tutup koneksi
+                }
+            }
+        });
     }
 
     private void initComponents() {
@@ -385,26 +395,44 @@ public class WeatherAppGUI extends JFrame {
         panel.add(Box.createVerticalStrut(15));
 
         // Grid untuk card tambahan
-        JPanel cardsGrid = new JPanel(new GridLayout(0, 3, 10, 10));
-        cardsGrid.setOpaque(false);
-        cardsGrid.setMaximumSize(new Dimension(800, 450));
-        cardsGrid.setName("additionalCardsGrid"); // Beri nama untuk referensi
+        additionalInfoGridPanel = new JPanel(new GridLayout(0, 3, 10, 10));
+        additionalInfoGridPanel.setOpaque(false);
+        additionalInfoGridPanel.setMaximumSize(new Dimension(800, 450));
+        additionalInfoGridPanel.setName("additionalCardsGrid"); // Beri nama untuk referensi
 
-        // TAMBAHKAN PATH ICON UNTUK SEMUA CARD AWAL (LOADING STATE)
-//        cardsGrid.add(createAdditionalCard("Titik Embun", "--°C", "Suhu dimana udara jenuh", ""));
-        cardsGrid.add(createAdditionalCard("Indeks Panas", "--°C", "Perasaan suhu aktual", "src/source/heating.png"));
-        cardsGrid.add(createAdditionalCard("Kualitas Udara", "--", "Memuat data...", "src/source/airquality.png"));
-        cardsGrid.add(createAdditionalCard("Tutupan Awan", "--%", "Memuat data...", "src/source/cloudCover.png"));
-        cardsGrid.add(createAdditionalCard("Cahaya Bulan", "--%", "Memuat data...", ""));
-        cardsGrid.add(createAdditionalCard("Temperatur Air", "--°C", "Memuat data...", "src/source/waterTemperature.png"));
-        cardsGrid.add(createAdditionalCard("Kelembapan Tanah", "--%", "Memuat data...", "src/source/soilMoisture.png"));
-        cardsGrid.add(createAdditionalCard("Evaporasi", "--mm", "Penguapan Harian", "src/source/Evaporation.png"));
-//        cardsGrid.add(createAdditionalCard("Radiasi UV", "--", "Memuat data...", ""));
-//        cardsGrid.add(createAdditionalCard("Visibilitas", "-- km", "Memuat data...", ""));
-//        cardsGrid.add(createAdditionalCard("Angin Kencang", "-- km/h", "Memuat data...", ""));
-        cardsGrid.add(createAdditionalCard("Tekanan Laut", "-- hPa", "Memuat data...", "src/source/ocenPressure.png"));
+        // --- DAFTAR KARTU SAAT APLIKASI DIMULAI (LOADING STATE) ---
 
-        panel.add(cardsGrid);
+        // 1. Indeks Panas
+        additionalInfoGridPanel.add(createAdditionalCard("Indeks Panas", "--°C", "Perasaan suhu aktual", "src/source/heating.png"));
+
+        // 2. Kualitas Udara
+        additionalInfoGridPanel.add(createAdditionalCard("Kualitas Udara", "--", "Memuat data...", "src/source/airquality.png"));
+
+        // 3. Tutupan Awan
+        additionalInfoGridPanel.add(createAdditionalCard("Tutupan Awan", "--%", "Memuat data...", "src/source/cloudCover.png"));
+
+        // 4. Partikel Debu Halus (BARU DITAMBAHKAN AGAR MUNCUL DI AWAL)
+        additionalInfoGridPanel.add(createAdditionalCard("Partikel Debu Halus", "--", "µg/m³ (Debu Halus)", "src/source/Pm2,5.png"));
+
+        // 5. Partikel Debu Kasar (BARU DITAMBAHKAN AGAR MUNCUL DI AWAL)
+        additionalInfoGridPanel.add(createAdditionalCard("Partikel Debu Kasar", "--", "µg/m³ (Debu Kasar)", "src/source/Pm10.png"));
+
+        // 6. Cahaya Bulan
+        additionalInfoGridPanel.add(createAdditionalCard("Fase Bulan", "--", "Memuat data...", getMoonPhaseIcon())); // Gunakan getMoonPhaseIcon agar defaultnya benar
+
+        // 7. Temperatur Air
+        additionalInfoGridPanel.add(createAdditionalCard("Temperatur Air", "--°C", "Memuat data...", "src/source/waterTemperature.png"));
+
+        // 8. Kelembapan Tanah
+        additionalInfoGridPanel.add(createAdditionalCard("Kelembapan Tanah", "--%", "Memuat data...", "src/source/soilMoisture.png"));
+
+        // 9. Evaporasi
+        additionalInfoGridPanel.add(createAdditionalCard("Evaporasi", "--mm", "Penguapan Harian", "src/source/Evaporation.png"));
+
+        // 10. Tekanan Laut
+        additionalInfoGridPanel.add(createAdditionalCard("Tekanan Laut", "-- hPa", "Memuat data...", "src/source/ocenPressure.png"));
+
+        panel.add(additionalInfoGridPanel);
         return panel;
     }
 
@@ -413,16 +441,22 @@ public class WeatherAppGUI extends JFrame {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setOpaque(false);
         panel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
         JLabel sectionTitle = createStyledLabel("7-Day Weather Forecast", new Font("Arial", Font.BOLD, 18), Color.WHITE);
         sectionTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
         panel.add(sectionTitle);
         panel.add(Box.createVerticalStrut(15));
-        JPanel forecastPanel = new JPanel(new GridLayout(1, 7, 8, 0));
-        forecastPanel.setOpaque(false);
-        forecastPanel.setMaximumSize(new Dimension(800, 120));
-        // Tambahkan placeholder
-        for(int i=0; i<7; i++) forecastPanel.add(new BlurPanel(new Color(255,255,255)));
-        panel.add(forecastPanel);
+
+        forecastCardsPanel = new JPanel(new GridLayout(1, 7, 8, 0));
+        forecastCardsPanel.setOpaque(false);
+        forecastCardsPanel.setMaximumSize(new Dimension(800, 120));
+
+        // Tambahkan placeholder awal
+        for(int i=0; i<7; i++) {
+            forecastCardsPanel.add(new BlurPanel(new Color(255,255,255)));
+        }
+
+        panel.add(forecastCardsPanel);
         return panel;
     }
 
@@ -660,7 +694,7 @@ public class WeatherAppGUI extends JFrame {
                 }
             }
         });
-        tabbedPane.addTab("⭐ Favorit", new JScrollPane(favList));
+        tabbedPane.addTab("Favorit", new JScrollPane(favList));
 
         // --- TAB 2: RIWAYAT (HISTORY) ---
         // Kita gunakan JPanel agar bisa menampung List dan Tombol
@@ -707,7 +741,7 @@ public class WeatherAppGUI extends JFrame {
         historyPanel.add(new JScrollPane(histList), BorderLayout.CENTER);
         historyPanel.add(clearHistoryButton, BorderLayout.SOUTH);
 
-        tabbedPane.addTab("🕒 Riwayat", historyPanel);
+        tabbedPane.addTab("Riwayat", historyPanel);
 
         dialog.add(tabbedPane);
         dialog.setVisible(true);
@@ -869,25 +903,22 @@ public class WeatherAppGUI extends JFrame {
     }
 
     private void updateForecastPanel(WeatherData weatherData) {
-        // Hapus forecast panel yang lama
-        Component[] components = ((JPanel)scrollPane.getViewport().getView()).getComponents();
-        for (Component comp : components) {
-            if (comp instanceof JPanel) {
-                JPanel panel = (JPanel) comp;
-                // Cari overview panel berdasarkan judul
-                Component[] children = panel.getComponents();
-                for (Component child : children) {
-                    if (child instanceof JLabel) {
-                        JLabel label = (JLabel) child;
-                        if ("7-Day Weather Forecast".equals(label.getText())) {
-                            // Update forecast cards
-                            updateForecastCards(panel, weatherData);
-                            return;
-                        }
-                    }
-                }
+        // Tidak perlu loop mencari komponen lagi! Kita langsung akses 'forecastCardsPanel'
+        if (forecastCardsPanel == null) return;
+
+        forecastCardsPanel.removeAll(); // Hapus kartu lama
+
+        // Loop data dan tambahkan kartu baru
+        for (int i = 0; i < 7; i++) {
+            WeatherData.ForecastDay forecastDay = weatherData.getForecastDay(i);
+            if (forecastDay != null) {
+                forecastCardsPanel.add(createForecastCard(forecastDay));
             }
         }
+
+        // Wajib panggil ini agar UI tergambar ulang
+        forecastCardsPanel.revalidate();
+        forecastCardsPanel.repaint();
     }
 
     private void updateForecastCards(JPanel overviewPanel, WeatherData weatherData) {
@@ -977,94 +1008,65 @@ public class WeatherAppGUI extends JFrame {
     }
 
     private void updateAdditionalCards(WeatherData weatherData) {
-        if (weatherData == null) return;
+        // Tidak perlu loop mencari komponen lagi!
+        if (additionalInfoGridPanel == null || weatherData == null) return;
 
-        // Cari panel additional cards
-        Component[] components = ((JPanel)scrollPane.getViewport().getView()).getComponents();
-        for (Component comp : components) {
-            if (comp instanceof JPanel) {
-                JPanel panel = (JPanel) comp;
-                // Cari additional cards panel berdasarkan judul
-                Component[] children = panel.getComponents();
-                for (Component child : children) {
-                    if (child instanceof JLabel) {
-                        JLabel label = (JLabel) child;
-                        if ("Informasi Tambahan".equals(label.getText())) {
-                            // Update additional cards
-                            updateAdditionalCardsGrid(panel, weatherData);
-                            return;
-                        }
-                    }
-                }
-            }
-        }
+        additionalInfoGridPanel.removeAll();
+
+        // 1
+        additionalInfoGridPanel.add(createAdditionalCard("Indeks Panas",
+                String.format("%.1f°C", calculateHeatIndex(weatherData.getTemperature(), weatherData.getHumidity())),
+                "Perasaan suhu aktual", "src/source/heating.png"));
+
+        // 2
+        additionalInfoGridPanel.add(createAdditionalCard("Kualitas Udara",
+                String.valueOf((int)weatherData.getUsEpaIndex()),
+                getAirQualityDescription(weatherData.getUsEpaIndex()), "src/source/airquality.png"));
+
+        // 3
+        additionalInfoGridPanel.add(createAdditionalCard("Tutupan Awan",
+                weatherData.getCloudCover() + "%",
+                getCloudCoverDescription(weatherData.getCloudCover()), "src/source/cloudCover.png"));
+
+        // 4 (Partikel Halus)
+        additionalInfoGridPanel.add(createAdditionalCard("Partikel Debu Halus",
+                String.format("%.1f", weatherData.getPm2_5()),
+                "µg/m³ (Debu Halus)", "src/source/Pm2,5.png")); // Jika punya icon PM2.5, masukkan path di sini
+
+        // 5 (Partikel Kasar)
+        additionalInfoGridPanel.add(createAdditionalCard("Partikel Debu Kasar",
+                String.format("%.1f", weatherData.getPm10()),
+                "µg/m³ (Debu Kasar)", "src/source/Pm10.png")); // Jika punya icon PM10, masukkan path di sini
+
+        // 6
+        additionalInfoGridPanel.add(createAdditionalCard("Fase Bulan",
+                calculateMoonPhase(),
+                getMoonPhaseDescription(), getMoonPhaseIcon()));
+
+        // 7
+        additionalInfoGridPanel.add(createAdditionalCard("Temperatur Air",
+                calculateWaterTemperature(weatherData.getTemperature(), weatherData.getHumidity()),
+                getWaterTemperatureDescription(weatherData.getTemperature()), "src/source/waterTemperature.png"));
+
+        // 8
+        additionalInfoGridPanel.add(createAdditionalCard("Kelembapan Tanah",
+                calculateSoilMoisture(weatherData.getHumidity(), weatherData.getDailyChanceOfRain()) + "%",
+                getSoilMoistureDescription(weatherData.getHumidity(), weatherData.getDailyChanceOfRain()), "src/source/soilMoisture.png"));
+
+        // 9
+        additionalInfoGridPanel.add(createAdditionalCard("Evaporasi",
+                String.format("%.1fmm", calculateEvaporation(weatherData.getTemperature(), weatherData.getHumidity(), weatherData.getWindSpeed())),
+                "Penguapan Harian", "src/source/Evaporation.png"));
+
+        // 10
+        additionalInfoGridPanel.add(createAdditionalCard("Tekanan Laut",
+                String.format("%.0f hPa", weatherData.getPressure()),
+                getPressureDescription(weatherData.getPressure()), "src/source/ocenPressure.png"));
+
+        // Update UI
+        additionalInfoGridPanel.revalidate();
+        additionalInfoGridPanel.repaint();
     }
-
-    private void updateAdditionalCardsGrid(JPanel additionalPanel, WeatherData weatherData) {
-        // Cari grid panel
-        for (Component comp : additionalPanel.getComponents()) {
-            if (comp instanceof JPanel) {
-                JPanel cardsGrid = (JPanel) comp;
-                if ("additionalCardsGrid".equals(cardsGrid.getName()) || cardsGrid.getComponentCount() == 12) {
-                    cardsGrid.removeAll();
-
-                    // Data real dari API dengan path icon lengkap
-//                    cardsGrid.add(createAdditionalCard("Titik Embun",
-//                            String.format("%.1f°C", calculateDewPoint(weatherData.getTemperature(), weatherData.getHumidity())),
-//                            "Suhu dimana udara jenuh", ""));
-
-                    cardsGrid.add(createAdditionalCard("Indeks Panas",
-                            String.format("%.1f°C", calculateHeatIndex(weatherData.getTemperature(), weatherData.getHumidity())),
-                            "Perasaan suhu aktual", "src/source/heating.png"));
-
-                    cardsGrid.add(createAdditionalCard("Kualitas Udara",
-                            String.valueOf((int)weatherData.getUsEpaIndex()),
-                            getAirQualityDescription(weatherData.getUsEpaIndex()), "src/source/airquality.png"));
-
-                    cardsGrid.add(createAdditionalCard("Tutupan Awan",
-                            weatherData.getCloudCover() + "%",
-                            getCloudCoverDescription(weatherData.getCloudCover()), "src/source/cloudCover.png"));
-
-                    cardsGrid.add(createAdditionalCard("Cahaya Bulan",
-                            calculateMoonPhase(),
-                            getMoonPhaseDescription(), ""));
-
-                    cardsGrid.add(createAdditionalCard("Temperatur Air",
-                            calculateWaterTemperature(weatherData.getTemperature(), weatherData.getHumidity()),
-                            getWaterTemperatureDescription(weatherData.getTemperature()), "src/source/waterTemperature.png"));
-
-                    cardsGrid.add(createAdditionalCard("Kelembapan Tanah",
-                            calculateSoilMoisture(weatherData.getHumidity(), weatherData.getDailyChanceOfRain()) + "%",
-                            getSoilMoistureDescription(weatherData.getHumidity(), weatherData.getDailyChanceOfRain()), "src/source/soilMoisture.png"));
-
-                    cardsGrid.add(createAdditionalCard("Evaporasi",
-                            String.format("%.1fmm", calculateEvaporation(weatherData.getTemperature(), weatherData.getHumidity(), weatherData.getWindSpeed())),
-                            "Penguapan Harian", "src/source/Evaporation.png"));
-
-//                    cardsGrid.add(createAdditionalCard("Radiasi UV",
-//                            String.format("%.1f", weatherData.getUvIndex()),
-//                            getUVDescription(weatherData.getUvIndex()), ""));
-//
-//                    cardsGrid.add(createAdditionalCard("Visibilitas",
-//                            String.format("%.1f km", weatherData.getVisibility()),
-//                            getVisibilityDescription(weatherData.getVisibility()), ""));
-//
-//                    cardsGrid.add(createAdditionalCard("Angin Kencang",
-//                            String.format("%.1f km/h", weatherData.getWindSpeed()),
-//                            "Dari " + getWindDirectionDescription(weatherData.getWindDirection()), ""));
-
-                    cardsGrid.add(createAdditionalCard("Tekanan Laut",
-                            String.format("%.0f hPa", weatherData.getPressure()),
-                            getPressureDescription(weatherData.getPressure()), "src/source/ocenPressure.png"));
-
-                    cardsGrid.revalidate();
-                    cardsGrid.repaint();
-                    break;
-                }
-            }
-        }
-    }
-
 
     // Buat titik embun di info utama
     private String getDewPointDescription(double dewPoint, double temperature) {
@@ -1108,28 +1110,41 @@ public class WeatherAppGUI extends JFrame {
 
     // Method untuk fase bulan (sederhana)
     private String calculateMoonPhase() {
-        // Implementasi sederhana fase bulan berdasarkan tanggal
+        // Logika sederhana berdasarkan hari dalam bulan (Siklus ~29.5 hari)
         java.time.LocalDate today = java.time.LocalDate.now();
-        int dayOfMonth = today.getDayOfMonth();
+        int day = today.getDayOfMonth();
 
-        if (dayOfMonth <= 7) return "25%";
-        else if (dayOfMonth <= 14) return "50%";
-        else if (dayOfMonth <= 21) return "75%";
-        else return "100%";
+        // Mengembalikan persentase iluminasi estimasi
+        if (day == 1 || day == 30) return "0%";
+        else if (day < 7) return "25%";
+        else if (day < 14) return "50%";
+        else if (day == 15) return "100%";
+        else if (day < 22) return "75%";
+        else return "25%";
     }
 
     private String getMoonPhaseDescription() {
         java.time.LocalDate today = java.time.LocalDate.now();
-        int dayOfMonth = today.getDayOfMonth();
+        int day = today.getDayOfMonth();
 
-        if (dayOfMonth <= 3) return "Bulan Baru";
-        else if (dayOfMonth <= 7) return "Bulan Sabit Awal";
-        else if (dayOfMonth <= 10) return "Paruh Awal";
-        else if (dayOfMonth <= 14) return "Cembung Awal";
-        else if (dayOfMonth <= 17) return "Bulan Purnama";
-        else if (dayOfMonth <= 21) return "Cembung Akhir";
-        else if (dayOfMonth <= 24) return "Paruh Akhir";
-        else return "Bulan Sabit Akhir";
+        if (day == 1 || day == 30) return "Bulan Baru";
+        else if (day < 7) return "Bulan Sabit";
+        else if (day < 14) return "Bulan Paruh";
+        else if (day == 15) return "Bulan Purnama";
+        else if (day < 22) return "Bulan Cembung";
+        else return "Bulan Sabit";
+    }
+
+    private String getMoonPhaseIcon() {
+        java.time.LocalDate today = java.time.LocalDate.now();
+        int day = today.getDayOfMonth();
+
+        if (day == 1 || day == 30) return "src/source/Bulan-baru.png";
+        else if (day < 7) return "src/source/Bulan-sabit-awal.png";
+        else if (day < 14) return "src/source/Bulan-paruh-awal.png";
+        else if (day == 15) return "src/source/full-moon.png";
+        else if (day < 22) return "src/source/Bulan-paruh-akhir.png";
+        else return "src/source/Bulan-sabit-akhir.png";
     }
 
     // Method untuk kelembapan tanah
