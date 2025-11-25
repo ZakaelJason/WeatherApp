@@ -7,7 +7,6 @@ import org.json.JSONObject;
 import org.json.JSONArray;
 
 public class WeatherApp {
-    // Ganti dengan API key Anda dari weatherapi.com
     private static final String API_KEY = "d3ed67e6fe744db1814122346251711";
     private static final String BASE_URL = "http://api.weatherapi.com/v1/forecast.json";
     private static final String AQI = "yes"; // Air Quality Index: yes atau no

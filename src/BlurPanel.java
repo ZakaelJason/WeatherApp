@@ -1,6 +1,5 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.image.BufferedImage;
 
 class BlurPanel extends JPanel {
     private static final int BLUR_RADIUS = 20;

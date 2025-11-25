@@ -109,20 +109,6 @@ public class WeatherData {
     public String getSunset() { return sunset; }
     public JSONArray getForecastDays() { return forecastDays; }
 
-    // Method untuk mendapatkan deskripsi kualitas udara
-    public String getAirQualityDescription() {
-        int index = (int) usEpaIndex;
-        switch (index) {
-            case 1: return "Baik";
-            case 2: return "Sedang";
-            case 3: return "Tidak Sehat untuk Kelompok Sensitif";
-            case 4: return "Tidak Sehat";
-            case 5: return "Sangat Tidak Sehat";
-            case 6: return "Berbahaya";
-            default: return "Tidak Diketahui";
-        }
-    }
-
     // Method untuk mendapatkan data forecast per hari
     public ForecastDay getForecastDay(int index) {
         try {

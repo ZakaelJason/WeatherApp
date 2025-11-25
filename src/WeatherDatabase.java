@@ -12,14 +12,14 @@ public class WeatherDatabase {
     public WeatherDatabase() {
         try {
             connection = DriverManager.getConnection(DB_URL, USER, PASS);
-            System.out.println("Database connected successfully.");
+            System.out.println("Database sudah tersambung!");
         } catch (SQLException e) {
             System.err.println("Gagal koneksi database: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    // Method helper untuk memastikan koneksi masih hidup
+    // Method untuk memastikan koneksi masih hidup
     private void checkConnection() {
         try {
             if (connection == null || connection.isClosed()) {
@@ -55,7 +55,7 @@ public class WeatherDatabase {
         }
     }
 
-    // Mendapatkan list history (terbaru di atas)
+    // Mendapatkan list history
     public List<String> getHistory() {
         checkConnection();
 
